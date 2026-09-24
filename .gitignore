@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# 工具缓存
+.ruff_cache/
+.mimocode/
+
+# docx 解压出的临时目录（可用 parse_questions.py 重新生成）
+temp/
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

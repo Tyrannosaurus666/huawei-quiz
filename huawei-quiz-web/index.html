@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>华为服务知识测验</title>
+<link rel="stylesheet" href="https://miaoda.feishu.cn/fonts/css2?family=Noto+Serif+SC:wght@600;700;900&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+/* ===== 设计令牌 ===== */
+:root{
+  --red:#C7000B;          /* 华为红 - 主品牌色 */
+  --red-dark:#9E0008;
+  --red-soft:#FBE7E8;
+  --green:#2E7D32;
+  --green-soft:#E9F4EA;
+  --ink:#20242A;
+  --muted:#70767F;
+  --paper:#F3EFE6;        /* 暖纸白背景 */
+  --card:#FFFFFF;
+  --line:#E3DECF;
+  --shadow:0 1px 2px rgba(32,36,42,.06),0 6px 24px rgba(32,36,42,.06);
+  --radius:14px;
+  --serif:"Noto Serif SC","Songti SC","SimSun",serif;
+  --sans:"Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{
+  font-family:var(--sans);
+  background:var(--paper);
+  color:var(--ink);
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+button{font-family:inherit;cursor:pointer}
+.view{max-width:760px;margin:0 auto;padding:0 20px 40px}
+
+/* ===== 顶部品牌条 ===== */
+.topbar{
+  background:var(--red);
+  color:#fff;
+  padding:0 20px;
+  position:sticky;top:0;z-index:50;
+  box-shadow:0 2px 8px rgba(158,0,8,.25);
+}
+.topbar-inner{
+  max-width:760px;margin:0 auto;
+  display:flex;align-items:center;justify-content:space-between;
+  height:52px;
+}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:16px;letter-spacing:.5px}
+.brand-mark{
+  width:26px;height:26px;border-radius:8px;background:#fff;
+  display:grid;place-items:center;color:var(--red);font-family:var(--serif);font-weight:900;font-size:15px;
+}
+.topbar .back-btn{
+  background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.4);
+  color:#fff;border-radius:8px;padding:6px 14px;font-size:14px;
+  display:none;align-items:center;gap:6px;
+}
+.topbar .back-btn:hover{background:rgba(255,255,255,.28)}
+.topbar.show-back .back-btn{display:inline-flex}
+
+/* ===== 首页 ===== */
+.hero{
+  text-align:center;padding:44px 8px 30px;
+}
+.hero .kicker{
+  display:inline-block;font-size:13px;letter-spacing:2px;color:var(--red);
+  border:1px solid var(--red);border-radius:999px;padding:4px 16px;margin-bottom:18px;
+  background:var(--red-soft);
+}
+.hero h1{
+  font-family:var(--serif);font-weight:900;font-size:32px;letter-spacing:1px;
+}
+.hero .sub{color:var(--muted);margin-top:10px;font-size:15px}
+.stats{
+  display:flex;justify-content:center;gap:14px;margin:22px auto 4px;flex-wrap:wrap;
+}
+.stat-card{
+  background:var(--card);border:1px solid var(--line);border-radius:12px;
+  padding:12px 20px;min-width:110px;
+}
+.stat-card .num{font-family:var(--serif);font-weight:900;font-size:24px;color:var(--red)}
+.stat-card .lbl{font-size:13px;color:var(--muted)}
+
+.mode-list{display:grid;gap:14px;margin-top:26px}
+.mode-btn{
+  display:flex;align-items:center;gap:16px;text-align:left;width:100%;
+  background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+  padding:18px 20px;box-shadow:var(--shadow);
+  transition:transform .12s ease,border-color .12s ease;
+}
+.mode-btn:hover{transform:translateY(-2px);border-color:var(--red)}
+.mode-btn:active{transform:translateY(0)}
+.mode-ico{
+  width:44px;height:44px;border-radius:12px;flex:none;
+  display:grid;place-items:center;background:var(--red-soft);color:var(--red);
+}
+.mode-ico svg{width:22px;height:22px}
+.mode-info .t{font-weight:700;font-size:16px}
+.mode-info .d{font-size:13px;color:var(--muted);margin-top:2px}
+.mode-badge{
+  margin-left:auto;flex:none;background:var(--paper);border:1px solid var(--line);
+  color:var(--muted);border-radius:999px;font-size:12px;padding:4px 12px;
+}
+
+/* ===== 答题页 ===== */
+.quiz-head{
+  display:flex;align-items:center;justify-content:space-between;
+  margin:18px 0 4px;font-size:14px;color:var(--muted);
+}
+.quiz-progress-wrap{
+  display:flex;align-items:center;gap:12px;margin:8px 0 18px;
+}
+.progress-track{flex:1;height:6px;background:var(--line);border-radius:99px;overflow:hidden}
+.progress-fill{height:100%;background:var(--red);border-radius:99px;transition:width .25s ease}
+.quiz-score{font-size:13px;color:var(--muted);white-space:nowrap}
+
+/* 答题卡小方格 - 签名元素 */
+.sheet-grid{display:flex;flex-wrap:wrap;gap:4px;margin:0 0 16px}
+.sheet-cell{
+  width:14px;height:14px;border-radius:4px;background:var(--line);
+  transition:background .2s ease;
+}
+.sheet-cell.ok{background:var(--green)}
+.sheet-cell.no{background:var(--red)}
+.sheet-cell.cur{border:2px solid var(--ink);background:var(--card)}
+
+.q-card{
+  background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+  padding:24px;box-shadow:var(--shadow);
+}
+.q-meta{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.q-type{
+  font-size:12px;font-weight:700;letter-spacing:1px;color:var(--red);
+  border:1px solid var(--red);background:var(--red-soft);border-radius:6px;padding:3px 10px;
+}
+.q-num{font-size:13px;color:var(--muted)}
+.q-text{
+  font-family:var(--serif);font-weight:700;font-size:19px;line-height:1.75;
+  margin-bottom:20px;
+}
+
+.opt-list{display:grid;gap:10px}
+.opt{
+  display:flex;align-items:flex-start;gap:12px;text-align:left;width:100%;
+  background:var(--card);border:1.5px solid var(--line);border-radius:12px;
+  padding:14px 16px;font-size:15px;line-height:1.6;color:var(--ink);
+  transition:border-color .12s ease,background .12s ease;
+}
+.opt:hover{border-color:var(--red)}
+.opt .opt-key{
+  flex:none;width:28px;height:28px;border-radius:8px;
+  display:grid;place-items:center;font-weight:700;font-size:14px;
+  background:var(--paper);color:var(--muted);border:1px solid var(--line);
+  transition:all .12s ease;
+}
+.opt.selected{border-color:var(--red);background:var(--red-soft)}
+.opt.selected .opt-key{background:var(--red);color:#fff;border-color:var(--red)}
+.opt.right{border-color:var(--green);background:var(--green-soft)}
+.opt.right .opt-key{background:var(--green);color:#fff;border-color:var(--green)}
+.opt.wrong{border-color:var(--red);background:var(--red-soft);opacity:.92}
+.opt.wrong .opt-key{background:var(--red);color:#fff;border-color:var(--red)}
+.opt.dim:not(.right):not(.wrong){opacity:.55}
+
+/* 判断题选项 */
+.judge-opt{
+  justify-content:center;font-weight:700;font-size:16px;padding:18px;
+}
+.judge-opt .opt-key{width:32px;height:32px}
+
+.act-row{margin-top:20px;display:flex;gap:12px}
+.btn{
+  flex:1;border:none;border-radius:12px;padding:14px 20px;
+  font-size:16px;font-weight:700;letter-spacing:.5px;
+  transition:background .15s ease,transform .1s ease;
+}
+.btn:active{transform:scale(.98)}
+.btn-primary{background:var(--red);color:#fff}
+.btn-primary:hover{background:var(--red-dark)}
+.btn-primary:disabled{background:#D9A8AA;cursor:not-allowed}
+.btn-ghost{
+  background:transparent;color:var(--muted);border:1.5px solid var(--line);
+}
+.btn-ghost:hover{border-color:var(--ink);color:var(--ink)}
+
+.feedback{
+  margin-top:16px;border-radius:12px;padding:14px 18px;font-size:15px;
+  display:none;align-items:flex-start;gap:10px;
+}
+.feedback.show{display:flex;animation:pop .2s ease}
+.feedback.ok{background:var(--green-soft);color:var(--green);border:1px solid #BFDCC2}
+.feedback.no{background:var(--red-soft);color:var(--red-dark);border:1px solid #F0C4C6}
+.feedback .fb-ico{flex:none;margin-top:2px}
+.feedback .ans-line{margin-top:4px;font-weight:700}
+@keyframes pop{from{transform:translateY(4px);opacity:0}to{transform:none;opacity:1}}
+
+/* ===== 结果页 ===== */
+.result-card{
+  background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+  padding:32px 24px;box-shadow:var(--shadow);text-align:center;margin-top:24px;
+}
+.ring{
+  width:150px;height:150px;margin:0 auto 18px;position:relative;
+  border-radius:50%;
+  background:conic-gradient(var(--red) calc(var(--pct)*1%),var(--line) 0);
+  display:grid;place-items:center;
+}
+.ring::before{
+  content:"";position:absolute;inset:12px;background:var(--card);border-radius:50%;
+}
+.ring .ring-inner{position:relative;z-index:1}
+.ring .pct{font-family:var(--serif);font-weight:900;font-size:34px;color:var(--ink)}
+.ring .pct-lbl{font-size:12px;color:var(--muted)}
+.result-title{font-family:var(--serif);font-weight:900;font-size:22px;margin-bottom:6px}
+.result-sub{color:var(--muted);font-size:14px;margin-bottom:20px}
+.result-actions{display:grid;gap:10px;max-width:340px;margin:0 auto}
+
+.wrong-list{margin-top:26px;text-align:left}
+.wrong-list h3{
+  font-size:16px;margin-bottom:12px;display:flex;align-items:center;gap:8px;
+}
+.wrong-item{
+  background:var(--card);border:1px solid var(--line);border-radius:12px;
+  padding:14px 16px;margin-bottom:10px;font-size:14px;
+}
+.wrong-item .wq{font-weight:700;margin-bottom:6px;line-height:1.7}
+.wrong-item .wa{color:var(--green);font-weight:700}
+.wrong-item .wa .opt-lead{color:var(--muted);font-weight:400}
+
+.empty-tip{text-align:center;color:var(--muted);padding:30px 0;font-size:15px}
+
+/* ===== 响应式 ===== */
+@media (max-width:768px){
+  .hero h1{font-size:26px}
+  .stat-card{min-width:90px;padding:10px 14px}
+  .stat-card .num{font-size:20px}
+  .q-text{font-size:17px}
+  .opt{padding:13px 12px;font-size:14px}
+  .btn{font-size:15px;padding:13px 14px}
+  .topbar-inner{height:48px}
+  .view{padding:0 14px 30px}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar" id="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <span class="brand-mark">华</span>
+      <span>华为服务知识测验</span>
+    </div>
+    <button class="back-btn" id="backBtn" onclick="goHome()">返回</button>
+  </div>
+</div>
+
+<!-- ===== 视图：首页 ===== -->
+<section class="view" data-route="home" id="viewHome">
+  <div class="hero">
+    <span class="kicker">驾考宝典 · 式刷题</span>
+    <h1>华为服务知识测验</h1>
+    <p class="sub">随机出题 · 即时判分 · 错题自动归档</p>
+    <div class="stats">
+      <div class="stat-card"><div class="num">422</div><div class="lbl">总题数</div></div>
+      <div class="stat-card"><div class="num" id="statSingle">0</div><div class="lbl">单选题</div></div>
+      <div class="stat-card"><div class="num" id="statMulti">0</div><div class="lbl">多选题</div></div>
+      <div class="stat-card"><div class="num" id="statJudge">0</div><div class="lbl">判断题</div></div>
+    </div>
+  </div>
+  <div class="mode-list">
+    <button class="mode-btn" onclick="startQuiz('random')">
+      <span class="mode-ico">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg>
+      </span>
+      <span class="mode-info"><span class="t">随机练习</span><br><span class="d">全题库随机顺序，逐题闯关</span></span>
+      <span class="mode-badge">422 题</span>
+    </button>
+    <button class="mode-btn" onclick="startQuiz('mini')">
+      <span class="mode-ico">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 22v-1M9 3h6M12 9v4l3 2"/></svg>
+      </span>
+      <span class="mode-info"><span class="t">随机 20 题小测</span><br><span class="d">限时小测，检验掌握程度</span></span>
+      <span class="mode-badge">20 题</span>
+    </button>
+    <button class="mode-btn" onclick="startQuiz('choice')">
+      <span class="mode-ico">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      </span>
+      <span class="mode-info"><span class="t">选择题专项</span><br><span class="d">单选 + 多选混合练习</span></span>
+      <span class="mode-badge" id="badgeChoice">0 题</span>
+    </button>
+    <button class="mode-btn" onclick="startQuiz('judge')">
+      <span class="mode-ico">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>
+      </span>
+      <span class="mode-info"><span class="t">判断题专项</span><br><span class="d">对错判断，巩固记忆</span></span>
+      <span class="mode-badge" id="badgeJudge">0 题</span>
+    </button>
+    <button class="mode-btn" onclick="startQuiz('wrong')" id="wrongModeBtn">
+      <span class="mode-ico">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+      </span>
+      <span class="mode-info"><span class="t">错题重练</span><br><span class="d">重做历史错题，逐个击破</span></span>
+      <span class="mode-badge" id="badgeWrong">0 题</span>
+    </button>
+  </div>
+</section>
+
+<!-- ===== 视图：答题 ===== -->
+<section class="view" data-route="quiz" id="viewQuiz" hidden>
+  <div class="quiz-head">
+    <span id="quizModeLabel">随机练习</span>
+    <span id="quizPos">第 0 / 0 题</span>
+  </div>
+  <div class="sheet-grid" id="sheetGrid"></div>
+  <div class="quiz-progress-wrap">
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    <span class="quiz-score" id="quizScore">0 分</span>
+  </div>
+
+  <div class="q-card">
+    <div class="q-meta">
+      <span class="q-type" id="qType">单选题</span>
+      <span class="q-num" id="qNum">第 1 题</span>
+    </div>
+    <div class="q-text" id="qText"></div>
+    <div class="opt-list" id="optList"></div>
+    <div class="act-row">
+      <button class="btn btn-primary" id="submitBtn" onclick="handleSubmit()">提交答案</button>
+      <button class="btn btn-ghost" id="quitBtn" onclick="goHome()">退出</button>
+    </div>
+    <div class="feedback" id="feedback"></div>
+  </div>
+</section>
+
+<!-- ===== 视图：结果 ===== -->
+<section class="view" data-route="result" id="viewResult" hidden>
+  <div class="result-card">
+    <div class="ring" id="ring"><div class="ring-inner"><div class="pct" id="pctNum">0%</div><div class="pct-lbl">正确率</div></div></div>
+    <div class="result-title" id="resultTitle">练习完成</div>
+    <div class="result-sub" id="resultSub"></div>
+    <div class="result-actions">
+      <button class="btn btn-primary" onclick="retryWrong()">错题重练</button>
+      <button class="btn btn-ghost" onclick="startQuiz(lastMode)">再来一轮</button>
+      <button class="btn btn-ghost" onclick="goHome()">返回主页</button>
+    </div>
+  </div>
+  <div class="wrong-list" id="wrongList"></div>
+</section>
+
+<script>
+/* ===== 题库数据（由构建脚本注入） ===== */
+const QUESTIONS = [{"type":"choice","question":"1、以下哪些设备中用户去服务门店不需要提醒备份数据？","options":[{"letter":"A","content":"华为watch GT 3","answer":false},{"letter":"B","content":"Matebook 14","answer":false},{"letter":"C","content":"Mate 40","answer":false},{"letter":"D","content":"freebuds 4i","answer":true}],"answer":"D"},{"type":"choice","question":"2、简瑶在官网使用搜索的时候，以下哪一种是没有的？","options":[{"letter":"A","content":"热门搜索","answer":false},{"letter":"B","content":"快速搜索","answer":false},{"letter":"C","content":"手动搜索","answer":false},{"letter":"D","content":"首字母搜索","answer":true}],"answer":"D"},{"type":"choice","question":"3、以下哪种方式无法查询到版本更新日志？","options":[{"letter":"A","content":"搜索框输入产品型号+版本日志","answer":false},{"letter":"B","content":"快捷查询入口-版本升级日志","answer":false},{"letter":"C","content":"产品参数中选择对应产品查询","answer":true}],"answer":"C"},{"type":"choice","question":"4、知识库如何分屏使用？","options":[{"letter":"A","content":"任意点开一个知识-点击分屏","answer":false},{"letter":"B","content":"任意点开一个知识合集-分屏","answer":false},{"letter":"C","content":"搜索任意关键字-从跳转切换为-分屏","answer":true}],"answer":"C"},{"type":"choice","question":"5、以下哪一项不属于安抚三部曲","options":[{"letter":"A","content":"情绪安抚","answer":false},{"letter":"B","content":"行动安抚","answer":false},{"letter":"C","content":"问题安抚","answer":false},{"letter":"D","content":"灰度安抚","answer":true}],"answer":"D"},{"type":"choice","question":"6、吸引一位新顾客的费用是维持一个老顾客的( )倍","options":[{"letter":"A","content":"15","answer":false},{"letter":"B","content":"5","answer":false},{"letter":"C","content":"10","answer":false},{"letter":"D","content":"7","answer":true}],"answer":"D"},{"type":"choice","question":"7、以下哪一项不属于安抚三部曲","options":[{"letter":"A","content":"感知共情","answer":false},{"letter":"B","content":"体验共情","answer":true},{"letter":"C","content":"场景共情","answer":false},{"letter":"D","content":"行为共情","answer":false}],"answer":"B"},{"type":"choice","question":"8、以下不可以在服务倍贴心享受免费外观清洁服务的产品有？","options":[{"letter":"A","content":"华为FreeBuds系列指定型号","answer":false},{"letter":"B","content":"荣耀FlyPods系列指定型号","answer":false},{"letter":"C","content":"华为或荣耀笔记本电脑","answer":false},{"letter":"D","content":"智慧屏","answer":true}],"answer":"D"},{"type":"choice","question":"9、关于全方位保护用户隐私，描述错误的是？","options":[{"letter":"A","content":"微信、京东等应用打开时需用户二次授权","answer":false},{"letter":"B","content":"输入连接码后弹出“同意条款”，不需要用户阅读完毕点同意也可进行共享","answer":true},{"letter":"C","content":"用户点击暂停按钮后，坐席无法看到共享屏幕","answer":false},{"letter":"D","content":"支付宝、银行APP等应用打开时坐席端界面会直接暂停共享并黑屏","answer":false}],"answer":"B"},{"type":"choice","question":"10、用户手机屏幕摔碎了，距离官方服务中心比较远，可以选择的维修方式是","options":[{"letter":"A","content":"家门口小店维修","answer":false},{"letter":"B","content":"DIY维修","answer":false},{"letter":"C","content":"寄修","answer":true},{"letter":"D","content":"送修","answer":false}],"answer":"C"},{"type":"choice","question":"11坐席查询到距离用户最近的一家MSC门店，如何告知用户门店类型？","options":[{"letter":"A","content":"官方维修点","answer":false},{"letter":"B","content":"售后网点","answer":false},{"letter":"C","content":"服务中心","answer":true},{"letter":"D","content":"MSC","answer":false}],"answer":"C"},{"type":"choice","question":"12、多次服务投诉是指：涉及消费者投诉门店或线上人员服务、态度、维修质量、维修方案等场景，同一问题在一个顺延年内投诉（ ）。","options":[{"letter":"A","content":"两次未解决造成第三次投诉","answer":false},{"letter":"B","content":"三次未解决造成第四次投诉","answer":true}],"answer":"B"},{"type":"choice","question":"13、产品自燃/爆炸/漏电说法错误的是（ ）","options":[{"letter":"A","content":"无论用户是否愿意前往服务中心，都需要升级疑似危机。","answer":false},{"letter":"B","content":"不涉及人身伤害时，优先引导用户去服务中心。","answer":false},{"letter":"C","content":"升级队列为用户所在地代表处","answer":false},{"letter":"D","content":"如果用户不愿意前往服务中心，可以不升级疑似危机。","answer":true}],"answer":"D"},{"type":"choice","question":"14、关于疑似危机工单升级时效说法错误的是（ ）","options":[{"letter":"A","content":"所有疑似危机场景，坐席不主动承诺回电时效；若坐席告知用户后期有专人回电处理，则需要在工单中注明，并报备处理。","answer":false},{"letter":"B","content":"非互联网升级SLA：半小时","answer":false},{"letter":"C","content":"互联网升级SLA: 30分钟内指定专人邮件通报地区部危机处理专员，并建单跟踪，等待用户回复。获取用户信息后在2个小时内进行升级至危机队列.","answer":true},{"letter":"D","content":"对来电人提出要求知晓回电时间可告知：工作时间内:(周一至周日8:30-18:00）预计最快2小时、最晚24小时工作人员会与您取得联系，请您耐心等待；非工作时间:(周一至周日18:00以后）预计最快明日10:00、最晚18:00工作人员会与您取得联系","answer":false}],"answer":"C"},{"type":"choice","question":"15、闭单的时间是多长？","options":[{"letter":"A","content":"不涉及回电等情况时，需在挂机后30min内闭单","answer":true},{"letter":"B","content":"挂机后40分钟","answer":false},{"letter":"C","content":"挂机后1小时内","answer":false}],"answer":"A"},{"type":"choice","question":"16、小朱接到用户的电话，未找到知识库，告知用户会回复电话，小朱联系用户未联系上，小朱执行的流程是哪一个呢？","options":[{"letter":"A","content":"断线","answer":false},{"letter":"B","content":"升级","answer":false},{"letter":"C","content":"催单","answer":false},{"letter":"D","content":"353/233/463流程","answer":true}],"answer":"D"},{"type":"choice","question":"17、如用户进线问题为：“手机与手机一碰传文件怎么弄”，录单时应选择：","options":[{"letter":"A","content":"通信与连接-Huawei Share","answer":false},{"letter":"B","content":"通信与连接-NFC","answer":true},{"letter":"C","content":"通信与连接-超级终端/多设备控制中心","answer":false},{"letter":"D","content":"通信与连接-有线连接","answer":false}],"answer":"B"},{"type":"choice","question":"18、用户进电咨询自己的智慧屏如何设置艺术屏保，请问应该选择的SR大小类是？","options":[{"letter":"A","content":"智慧屏\u003e其他系统设置\u003e艺术屏保","answer":true},{"letter":"B","content":"智慧屏\u003e华为应用\u003e媒体中心","answer":false},{"letter":"C","content":"智慧屏\u003e其他系统设置\u003e更多系统设置","answer":false},{"letter":"D","content":"智慧屏\u003e产品整体\u003e其他","answer":false}],"answer":"A"},{"type":"choice","question":"19、用户表示笔记本麦克风打开了没有声音。请问该问题属于声音与视频下哪个业务类型？","options":[{"letter":"A","content":"声音录入","answer":true},{"letter":"B","content":"视频播放","answer":false}],"answer":"A"},{"type":"choice","question":"20、自动备份周期默认为每（）天备份一次。","options":[{"letter":"A","content":"5天","answer":false},{"letter":"B","content":"任何时间","answer":false},{"letter":"C","content":"30天","answer":false},{"letter":"D","content":"7天","answer":true}],"answer":"D"},{"type":"choice","question":"21、从iPhone手机克隆至华为品牌手机，以下不可以克隆的内容有哪个","options":[{"letter":"A","content":"相册图片","answer":false},{"letter":"B","content":"联系人","answer":false},{"letter":"C","content":"相册视频","answer":false},{"letter":"D","content":"应用程序","answer":true}],"answer":"D"},{"type":"choice","question":"22以下说法正确的是","options":[{"letter":"A","content":"iPhone作为发送端支持与华为手机之间的克隆","answer":true},{"letter":"B","content":"华为手机之间不可以互相克隆","answer":false},{"letter":"C","content":"iPhone之间不可以互相克隆","answer":false},{"letter":"D","content":"华为手机可以用手机克隆方式克隆到苹果设备","answer":false}],"answer":"A"},{"type":"choice","question":"23、以下说法不正确的是","options":[{"letter":"A","content":"云备份数据恢复是增量恢复，不会覆盖影响本地原有数据","answer":false},{"letter":"B","content":"云备份数据删除后无法恢复找回，删除时不会影响本地数据","answer":false},{"letter":"C","content":"云备份数据可以在云空间进行查看具体备份内容","answer":true},{"letter":"D","content":"云空间12.2.1.300及以上版本云备份支持移动网络下操作数据备份和恢复","answer":false}],"answer":"C"},{"type":"choice","question":"24、关于远程诊断工具，以下说法正确的是？","options":[{"letter":"A","content":"执行一次远程诊断分析所消耗的流量小于100kb","answer":false},{"letter":"B","content":"远程诊断分析必须在设备连接无线网络的情况下进行","answer":false},{"letter":"C","content":"执行远程诊断分析必须确保用户网络连接速度大于1Mbps","answer":false},{"letter":"D","content":"执行一次远程诊断分析所消耗的流量小于1M","answer":true}],"answer":"D"},{"type":"choice","question":"25、关于远程诊断工具，第三方应用检测，以下说法错误的是？","options":[{"letter":"A","content":"可以检测第三方应用权限设置问题","answer":true},{"letter":"B","content":"可以检测第三方应用卡顿无响应问题","answer":false},{"letter":"C","content":"可以检测微信卡顿故障","answer":false},{"letter":"D","content":"可以检测抖音短视频","answer":false}],"answer":"A"},{"type":"choice","question":"26、已提供最终方案，用户有不满或抱怨情绪。如锁屏密码忘记需要恢复出厂，用户勉强接受挂机。以下说法正确的是","options":[{"letter":"A","content":"需24H内回电，未接通时根据具体问题在24H内回电1-3次。","answer":true},{"letter":"B","content":"一直回电，直到接通为止","answer":false},{"letter":"C","content":"需48H内回电，未接通时根据具体问题在24H内回电1-3次","answer":false}],"answer":"A"},{"type":"choice","question":"27、ck030 50w无线车充搭配11v6A的车充，给mate 40 pro手机充电，功率可以达到多少w？","options":[{"letter":"A","content":"40","answer":false},{"letter":"B","content":"50w","answer":true},{"letter":"C","content":"18w","answer":false},{"letter":"D","content":"27w","answer":false}],"answer":"B"},{"type":"choice","question":"28以下哪个不是华为三脚架自拍杆 Pro的卖点","options":[{"letter":"A","content":"180° 自由旋转 视角更随心","answer":true},{"letter":"B","content":"相机一步启动，动静自在掌控","answer":false},{"letter":"C","content":"一掌可握 轻巧便携","answer":false},{"letter":"D","content":"四键遥控 便捷拍摄新体验","answer":false}],"answer":"A"},{"type":"choice","question":"29用户反馈相片打印机APP无法下载，坐席小明应该","options":[{"letter":"A","content":"告知用户可以在官网进行下载","answer":false},{"letter":"B","content":"告知用户产品已经上市很久，现在已经停产，故无法使用。","answer":false},{"letter":"C","content":"发送知识库中的网盘链接引导用户下载使用","answer":true}],"answer":"C"},{"type":"choice","question":"30、Tag有快速遗落提醒功能，可以实现蓝牙断开（ ）就可以快速提醒。A.10秒","options":[{"letter":"B","content":"30秒","answer":false},{"letter":"C","content":"20秒","answer":false},{"letter":"D","content":"15秒","answer":true}],"answer":"D"},{"type":"choice","question":"31、在于用户沟通中做法正确的是？","options":[{"letter":"A","content":"在服务过程中以用户体验为先，保持良好心态和专业的表达，及时响应用户；","answer":true},{"letter":"B","content":"遇到投诉问题直接告诉用户你投诉也没用，政策/流程就是这么规定的","answer":false},{"letter":"C","content":"需结合与用户互动的具体场景，灵活使用流程，不涉及的场景可略过；","answer":true}],"answer":"AC"},{"type":"choice","question":"32、简瑶购买了mate 30，她可以在官网中“服务支持”中查询到哪些内容？","options":[{"letter":"A","content":"设备常用问题的展现，直接点击进入查看解决方案","answer":true},{"letter":"B","content":"维修服务、服务店查询、备件价格查询 、保修政策、保修期及权益查询等，根据产品的不同服务略有不同","answer":true},{"letter":"C","content":"工具与资源的相关下载，在其中可以查询具体产品的相关信息","answer":true}],"answer":"ABC"},{"type":"choice","question":"33用户在官网的服务与支持找到哪些内容？","options":[{"letter":"A","content":"探索更多华为服务","answer":true},{"letter":"B","content":"服务公告与政策","answer":true},{"letter":"C","content":"精选内容推荐","answer":true},{"letter":"D","content":"产品支持","answer":true},{"letter":"E","content":"常见服务","answer":true}],"answer":"ABCDE"},{"type":"choice","question":"34、坐席已打开新建服务用户界面，可选择保存的性别有哪些","options":[{"letter":"A","content":"保密","answer":true},{"letter":"B","content":"男","answer":true},{"letter":"C","content":"女","answer":true}],"answer":"ABC"},{"type":"choice","question":"35以下知识库内容中，不可以进行截图传播的是","options":[{"letter":"A","content":"搜索结果页","answer":true},{"letter":"B","content":"知识详情页","answer":true},{"letter":"C","content":"个人中心","answer":true},{"letter":"D","content":"知识库主页","answer":true},{"letter":"E","content":"产品百科信息","answer":true}],"answer":"ABCDE"},{"type":"choice","question":"36、以下关于服务日描述正确的是？","options":[{"letter":"A","content":"每台设备在活动期内仅限参与一次保养","answer":true},{"letter":"B","content":"寄修可以参与","answer":false},{"letter":"C","content":"中国港澳台地区机型可参与服务日活动","answer":true},{"letter":"D","content":"经销商送修不可以参与","answer":true}],"answer":"ACD"},{"type":"choice","question":"37、连接远程服务过程中，用户点击哪些应用，弹窗会提示用户是否授权共享给客服坐席？","options":[{"letter":"A","content":"淘宝","answer":true},{"letter":"B","content":"支付宝","answer":false},{"letter":"C","content":"华为钱包","answer":false},{"letter":"D","content":"微信","answer":true}],"answer":"AD"},{"type":"choice","question":"38、远程服务支持手机系统版本为？","options":[{"letter":"A","content":"Emui5.0","answer":false},{"letter":"B","content":"Emui9.0","answer":true},{"letter":"C","content":"Emui10.0","answer":true},{"letter":"D","content":"Emui8.0","answer":true}],"answer":"BCD"},{"type":"choice","question":"39、以下属于售后服务中心的是（）","options":[{"letter":"A","content":"ASC-E","answer":true},{"letter":"B","content":"ASC-M","answer":true},{"letter":"C","content":"MSC","answer":true}],"answer":"ABC"},{"type":"choice","question":"40、疑似危机场景包含：","options":[{"letter":"A","content":"虚假宣传","answer":true},{"letter":"B","content":"多次服务投诉","answer":true},{"letter":"C","content":"政府职能机构投诉转办","answer":true},{"letter":"D","content":"媒体曝光","answer":true}],"answer":"ABCD"},{"type":"choice","question":"41、产品自燃/爆炸/漏电是指：因我司生产销售的产品出现的电池鼓包，并引发漏电、自燃、爆炸等导致用户财产损失、消费者索赔等，主要场景包含：","options":[{"letter":"A","content":"终端产品电源适配器自燃/爆炸，导致用户财物损失。","answer":true},{"letter":"B","content":"终端产品（主机/电源适配器）电池鼓包引发漏电/自燃/爆炸，导致用户财物损失。","answer":true},{"letter":"C","content":"终端产品接口（尾插/充电接口/充电线）烧焦烧毁，无人员伤亡。","answer":true}],"answer":"ABC"},{"type":"choice","question":"42、异常关单的场景有哪些？","options":[{"letter":"A","content":"无声电话","answer":true},{"letter":"B","content":"不文明用语","answer":true},{"letter":"C","content":"非业务场景","answer":true},{"letter":"D","content":"未联系到用户","answer":true},{"letter":"E","content":"升级","answer":false}],"answer":"ABCD"},{"type":"choice","question":"43、小张在接线中听不懂用户说的方言，小张可以怎么处理？","options":[{"letter":"A","content":"您好，您看您是否方便让您身边的家人或朋友使用普通话协助您进行描述呢？","answer":true},{"letter":"B","content":"抱歉，因为对您当地方言不太了解，为了更好地帮助您，我这边帮您查询一下您当地的服务中心来协助您进行处理，您看可以吗？(并短信发送此话术与服务店查询方式）若仍无法辨别，通话/会话中告知用户，发送具体查询服务店的方式，礼貌挂机/结束会话即可。","answer":true},{"letter":"C","content":"您好，我们这边是全国客服中心，可能对您当地方言不太了解，辛苦您这边使用普通话重新帮我描述下问题，可以吗？","answer":true}],"answer":"ABC"},{"type":"choice","question":"44、以下哪些属于电源与功耗的业务范围描述？","options":[{"letter":"A","content":"关于睡眠与休眠的相关问题。","answer":true},{"letter":"B","content":"关于耗电类相关问题。","answer":true},{"letter":"C","content":"关于各个应用的电池使用情况、电池设置、省电模式、电源计划（平衡、性能、高性能）等相关问题。","answer":true}],"answer":"ABC"},{"type":"choice","question":"45云空间同步可以支持的数据包含：","options":[{"letter":"A","content":"联系人","answer":true},{"letter":"B","content":"天气","answer":false},{"letter":"C","content":"相机视频","answer":true},{"letter":"D","content":"日历","answer":true}],"answer":"ACD"},{"type":"choice","question":"46、当“要求外呼场景”完成后，为提升用户体验进行的外呼。回电前需要确认哪些？","options":[{"letter":"A","content":"向当日值班组长申请回电同意","answer":false},{"letter":"B","content":"涉及疑似危机场景，外呼后正常闭单","answer":false},{"letter":"C","content":"向中控报备回电申请获得同意","answer":true},{"letter":"D","content":"业务不处于繁忙状态","answer":true}],"answer":"CD"},{"type":"choice","question":"47、外呼场景中以下要求外呼的场景有哪些","options":[{"letter":"A","content":"给用户提供的方案存在错误，避免给用户造成损失回电澄清与纠正","answer":true},{"letter":"B","content":"手表消息不提醒、路由器偶发性断网、PC间接性自动关机、智慧屏偶尔花屏等场景。","answer":true},{"letter":"C","content":"已给用户提供完整的排查方案，通话中不能确定用户问题是否解决","answer":true}],"answer":"ABC"},{"type":"choice","question":"48、要求外呼场景包括哪些场景","options":[{"letter":"A","content":"排查方案需挂机操作","answer":true},{"letter":"B","content":"用户对于方案不满意勉强挂机","answer":false},{"letter":"C","content":"解答错误自纠","answer":true},{"letter":"D","content":"用户要求回电跟进","answer":true},{"letter":"E","content":"可以听清用户问题，沟通中断线回拨","answer":true},{"letter":"F","content":"故障解决需回电验证","answer":true},{"letter":"G","content":"用户辱骂涉及业务问题","answer":true}],"answer":"ACDEFG"},{"type":"choice","question":"49、以下那些属于要求外呼场景？","options":[{"letter":"A","content":"业务要求","answer":true},{"letter":"B","content":"系统原因","answer":true},{"letter":"C","content":"提升用户体验","answer":false},{"letter":"D","content":"用户要求","answer":true}],"answer":"ABD"},{"type":"choice","question":"50、小明反馈充电器无法给设备充电，需如何排查","options":[{"letter":"A","content":"重新插拔或者更换数据线和被充电设备，确认是否为数据线或被充电设备本身问题。","answer":true},{"letter":"B","content":"将充电器在其它插座或者接线板排插上尝试是否可以充电，排除插座或排插的问题。","answer":true},{"letter":"C","content":"检查接头和接口是否有脏污，如果发现灰尘等脏物，建议用毛刷清理一下，再重新充电确认。","answer":true},{"letter":"D","content":"将充电器拔掉后重新插入插座或排插尝试是否可以充电。","answer":true}],"answer":"ABCD"},{"type":"judge","question":"51、坐席在接通电话时，语气轻快，语调上扬，在沟通时面带微笑","answer":"正确"},{"type":"judge","question":"52、林安来电告知说自己的手机有广告，坐席查询知识库后告知林安，林安不接受，坐席说“你不接受我也没办法”","answer":"错误"},{"type":"judge","question":"53、坐席小王直接将复制的知识库内容发给了用户","answer":"错误"},{"type":"judge","question":"54、林安来电告知坐席自己无法在官网中查询到自己寄修的产品的信息，坐席告知用户可以寄修服务我的服务记录中查询。","answer":"正确"},{"type":"judge","question":"55、简瑶来电想要了解mate30和mate30 pro的参数区别，坐席可通过服务工具-查询产品参数，告知用户详细参数和区别对比","answer":"正确"},{"type":"judge","question":"56、服务工单选择疑似危机后，会显示“疑似危机分类”且为必选","answer":"正确"},{"type":"judge","question":"57、产品最新知识是按照时间进行排序的。","answer":"正确"},{"type":"judge","question":"58、知识库内容可以截图，截图内容没有任何水印标记","answer":"错误"},{"type":"judge","question":"59、知识库没有任何问题与错误，若发现问题无法纠错","answer":"错误"},{"type":"judge","question":"60、服务话术的特征是幽默轻松、概念新颖，特点影射。","answer":"错误"},{"type":"judge","question":"61、用户投诉服务店工作人员态度有问题需升级至人员投诉组","answer":"错误"},{"type":"judge","question":"62、华为服务旗舰店是华为自营的，具备完整服务及体验功能、为消费者提供业界领先服务体验的超大型服务中心","answer":"正确"},{"type":"judge","question":"63、华为综合服务中心是华为自营的，具备完整服务及体验功能、为消费者提供舒适、快捷、温暖服务体验的大型服务专营店","answer":"错误"},{"type":"judge","question":"64、华为后台维修中心（BRC）华为授权或者自建的，具备规模维修及管理能力、直接面向消费者提供服务的维修中心","answer":"错误"},{"type":"judge","question":"65、使用手机查询门店是否参与服务日活动不需将我的华为APP更新至最新版","answer":"错误"},{"type":"judge","question":"66、远程服务工具能支持文字聊天功能","answer":"错误"},{"type":"judge","question":"67、用户距离门店太远时，可以向用户推荐寄修，寄修双向免物流费","answer":"正确"},{"type":"judge","question":"68、用户使用的mate40手机咨询是否可以上门服务，坐席告知用户mate40可以上门服务","answer":"正确"},{"type":"judge","question":"69、设备过敏问题，不用排查，直接帮助用户升级疑似危机","answer":"错误"},{"type":"judge","question":"70、BIOS的业务范围：包含BIOS的版本/固件更新、虚拟化VT、TPM、开机与硬盘密码等功能和相关问题。关于BIOS的业务范围描述是否正确？","answer":"正确"},{"type":"judge","question":"71、坐席可以在远程诊断工具“历史结果查询”界面中输入SR单号、设备SN查询设备历史检测记录","answer":"正确"},{"type":"judge","question":"72、远程诊断工具检测到用户设备存在设备存在异常发热问题，坐席可以将检测结果及改善建议通过短信发送至用户手机号","answer":"错误"},{"type":"judge","question":"73、坐席在使用远程诊断工具时，必须经得用户授权后才可以开始操作","answer":"正确"},{"type":"judge","question":"74、简瑶进线询问华为mate50 pro 素皮版和非素皮版后壳备件价格一样","answer":"错误"},{"type":"judge","question":"75、在跟用户的沟通中给用户提供了错误方案，挂机后需要回电更正一下","answer":"正确"},{"type":"judge","question":"76、小明是穿戴技能坐席，接到用户反馈购买Matebook X Pro随电脑赠送充电器出现问题，应该转接给PC汇聚队列","answer":"正确"},{"type":"judge","question":"77、海外及港澳台地区的产品可以在中国大陆的任何一个授权服务中心购买华为延长服务宝","answer":"错误"},{"type":"judge","question":"78、购机15天内更换新机的，延长服务宝的权益将转移至所换新设备上，有效期从换机当天起重新计算（ ）","answer":"正确"},{"type":"judge","question":"79、用户购买碎屏（含后盖）服务宝后，仅支持维修一次，屏幕和后盖不能分两次进行维修（ ）","answer":"正确"},{"type":"judge","question":"80、延长服务宝在三包法规定的标准保修服务期的基础上针对产品主机延长相应的保修服务时间，保修期内对于人为故障的维修，免收检测费、备件费及维修费","answer":"错误"},{"type":"choice","question":"1、以下关于“专业服务，通俗表达”理解不正确的是？","options":[{"letter":"A","content":"反复排查","answer":true},{"letter":"B","content":"做到“一个声音”","answer":false},{"letter":"C","content":"避免说内部术语","answer":false},{"letter":"D","content":"了解用户诉求","answer":false}],"answer":"A"},{"type":"choice","question":"2、以下哪些内容可以在跟电话沟通中使用：","options":[{"letter":"A","content":"你不要说话，听我讲完","answer":false},{"letter":"B","content":"是你的原因造成了现在的情况，我们无法处理","answer":false},{"letter":"C","content":"先生，您的心情我非常理解，请您放心，接下来我会尽全力协助您的","answer":true}],"answer":"C"},{"type":"choice","question":"3、简瑶的电脑蓝屏了，她可以在哪里找到解决方法呢？","options":[{"letter":"A","content":"常见服务","answer":false},{"letter":"B","content":"精选内容推荐","answer":false},{"letter":"C","content":"产品支持","answer":true},{"letter":"D","content":"探索更多华为服务","answer":false}],"answer":"C"},{"type":"choice","question":"4、简瑶在官网使用搜索的时候，以下哪一种是没有的？","options":[{"letter":"A","content":"快速搜索","answer":false},{"letter":"B","content":"首字母搜索","answer":true},{"letter":"C","content":"热门搜索","answer":false},{"letter":"D","content":"手动搜索","answer":false}],"answer":"B"},{"type":"choice","question":"5、如何使用一站式工作台2.0催单？","options":[{"letter":"A","content":"在客户SR总览区域的未关闭工单卡片找到“小铃铛”点击即可催单","answer":false},{"letter":"B","content":"点开需要催促的SR单，在SR单按钮区域点击“催单”即可","answer":true}],"answer":"B"},{"type":"choice","question":"6、个人首页我的待办中工单显示红色代表什么意思？","options":[{"letter":"A","content":"工单自创建起已经超24小时，但未超48小时","answer":false},{"letter":"B","content":"工单自创建起在24小时内","answer":false},{"letter":"C","content":"工单自创建起已经超48小时","answer":true}],"answer":"C"},{"type":"choice","question":"7、以下哪种方式无法查询到版本更新日志？","options":[{"letter":"A","content":"搜索框输入产品型号+版本日志","answer":false},{"letter":"B","content":"产品参数中选择对应产品查询","answer":true},{"letter":"C","content":"快捷查询入口-版本升级日志","answer":false}],"answer":"B"},{"type":"choice","question":"8、如何查询知识历史版本","options":[{"letter":"A","content":"点开一篇知识库文章－点击分屏－历史版本","answer":false},{"letter":"B","content":"知识搜索栏搜索对应知识+历史版本","answer":false},{"letter":"C","content":"点开一篇知识库文章－点击题目右边的知识详情－点击版本后面的历史版本","answer":true}],"answer":"C"},{"type":"choice","question":"9、除去搜索关键词的方式进行知识搜索外，若能知道一条知识的哪个信息，也可以通过该信息快速检索","options":[{"letter":"A","content":"身份ID","answer":false},{"letter":"B","content":"知识编号","answer":false},{"letter":"C","content":"知识ID","answer":true}],"answer":"C"},{"type":"choice","question":"10知识库如何分屏使用？","options":[{"letter":"A","content":"任意点开一个知识合集-分屏","answer":false},{"letter":"B","content":"任意点开一个知识-点击分屏","answer":false},{"letter":"C","content":"搜索任意关键字-从跳转切换为-分屏","answer":true}],"answer":"C"},{"type":"choice","question":"11、以下哪一项不属于安抚三部曲","options":[{"letter":"A","content":"体验共情","answer":true},{"letter":"B","content":"场景共情","answer":false},{"letter":"C","content":"感知共情","answer":false},{"letter":"D","content":"行为共情","answer":false}],"answer":"A"},{"type":"choice","question":"12、以下哪个选项不是具有排他性质的门店？","options":[{"letter":"A","content":"SSC","answer":false},{"letter":"B","content":"MSC","answer":false},{"letter":"D","content":"ASC-M","answer":true}],"answer":"D"},{"type":"choice","question":"13、维修更安心活动期间，符合获赠精美礼品的条件是？","options":[{"letter":"A","content":"到店维修因门店原因未能当天内修复","answer":true},{"letter":"B","content":"用户因时间问题需要第二天来拿","answer":false},{"letter":"C","content":"寄修不享受该活动","answer":false},{"letter":"D","content":"一个活动周期仅能参与一次","answer":false}],"answer":"A"},{"type":"choice","question":"14、配件更随心活动，描述正确的是？","options":[{"letter":"A","content":"一个活动周期仅能参与一次","answer":false},{"letter":"B","content":"非华为用户不可参与本活动","answer":false},{"letter":"C","content":"活动期间到店购买华为/荣耀品牌配件，立享9折优惠","answer":false},{"letter":"D","content":"优惠仅包括服务店华为品牌配件","answer":true}],"answer":"D"},{"type":"choice","question":"15、若用户产品已经产生入液情况，以下不建议主动给用户推荐的维修方式是？","options":[{"letter":"A","content":"寄修","answer":false},{"letter":"B","content":"预约","answer":false},{"letter":"C","content":"上门","answer":true},{"letter":"D","content":"到店","answer":false}],"answer":"C"},{"type":"choice","question":"16以下哪些产品可以选择寄修？","options":[{"letter":"A","content":"单独售卖的配件","answer":true},{"letter":"B","content":"香港购买的华为手机","answer":false},{"letter":"C","content":"车载固定台产品","answer":false},{"letter":"D","content":"智慧屏","answer":false}],"answer":"A"},{"type":"choice","question":"17以下哪个选项用户可以通过寄修支持？","options":[{"letter":"A","content":"换货","answer":false},{"letter":"B","content":"退货","answer":false},{"letter":"C","content":"检测维修","answer":true},{"letter":"D","content":"出具检测单","answer":false}],"answer":"C"},{"type":"choice","question":"18建单的时间是多长？","options":[{"letter":"A","content":"挂机后20分钟","answer":false},{"letter":"B","content":"挂机后30分钟","answer":true},{"letter":"C","content":"用户来电30分钟","answer":false}],"answer":"B"},{"type":"choice","question":"19、星星来电问题未解决进行了升级，升级的实效是多长时间呢？","options":[{"letter":"A","content":"2H内升级","answer":false},{"letter":"B","content":"当天下班前升级","answer":false},{"letter":"C","content":"当天8:00—18:00之间的工单，2H内升级","answer":true}],"answer":"C"},{"type":"choice","question":"20如用户进线问题为：“手机与手机一碰传文件怎么弄”，录单时应选择：","options":[{"letter":"A","content":"通信与连接-NFC","answer":true},{"letter":"B","content":"通信与连接-超级终端/多设备控制中心","answer":false},{"letter":"C","content":"通信与连接-有线连接","answer":false},{"letter":"D","content":"通信与连接-Huawei Share","answer":false}],"answer":"A"},{"type":"choice","question":"21如用户进线问题为：“屏幕有划痕”，录单时应选择：","options":[{"letter":"A","content":"配件与外设-壳套膜","answer":false},{"letter":"B","content":"外观结构与硬件-外观","answer":false},{"letter":"C","content":"外观结构与硬件-屏幕","answer":true}],"answer":"C"},{"type":"choice","question":"22用户进电咨询智慧屏的机身内存有多大，请问应该选择的SR大小类是？","options":[{"letter":"A","content":"智慧屏\u003e外观与硬件\u003e外观","answer":false},{"letter":"B","content":"智慧屏\u003e开关机与运行\u003e存储空间管理","answer":true},{"letter":"C","content":"智慧屏\u003e电源与功耗\u003e设备温度","answer":false},{"letter":"D","content":"智慧屏\u003e电源与功耗\u003e功耗","answer":false}],"answer":"B"},{"type":"choice","question":"23、以下说法正确的是","options":[{"letter":"A","content":"iPhone之间不可以互相克隆","answer":false},{"letter":"B","content":"iPhone作为发送端支持与华为手机之间的克隆","answer":true},{"letter":"C","content":"华为手机之间不可以互相克隆","answer":false},{"letter":"D","content":"华为手机可以用手机克隆方式克隆到苹果设备","answer":false}],"answer":"B"},{"type":"choice","question":"24、以下哪个选项不属于远程诊断分析结果？","options":[{"letter":"A","content":"预警","answer":false},{"letter":"B","content":"故障","answer":false},{"letter":"C","content":"正常","answer":false},{"letter":"D","content":"异常","answer":true}],"answer":"D"},{"type":"choice","question":"25、锁屏密码忘记小王已提供最终方案需要恢复出厂坐席，用户有不满或抱怨情绪且用户勉强接受挂机，L1坐席小王基于用户体验进行回电，以下回电时效及回电次数正确的是？","options":[{"letter":"A","content":"30min1次","answer":false},{"letter":"B","content":"48H2次","answer":false},{"letter":"C","content":"24H2次","answer":true},{"letter":"D","content":"4H1次","answer":false}],"answer":"C"},{"type":"choice","question":"26、方案中涉及恢复出厂设置、重启、还原所有设置、交叉排查等操作方案，会导致通话中断，属于要求外呼场景还是建议外呼场景","options":[{"letter":"A","content":"建议外呼场景","answer":false},{"letter":"B","content":"要求外呼场景","answer":true}],"answer":"B"},{"type":"choice","question":"27、无忧服务含（）年（）次意外服务宝和1年延长服务宝","options":[{"letter":"A","content":"1,1","answer":false},{"letter":"B","content":"1,2","answer":false},{"letter":"C","content":"2,2","answer":true},{"letter":"D","content":"2,1","answer":false}],"answer":"C"},{"type":"choice","question":"28、小A来电咨询自己的手机之前在服务店维修过麦克风是否可以补购延长服务宝，以下说法正确的是（）","options":[{"letter":"A","content":"如果想要购买延长服务宝，可以前往华为服务中心验机补购。","answer":false},{"letter":"B","content":"已经维修过的设备不在补购范围内","answer":false},{"letter":"C","content":"如果产品未购买过华为延长服务宝，在华为授权维修服务中心维修后仍在保，且仍在购机十个月内，可在华为客户服务中心购买华为延长服务宝。","answer":true}],"answer":"C"},{"type":"choice","question":"29、以下（）情况下可以申请延长服务宝退款","options":[{"letter":"A","content":"产品15天换货","answer":false},{"letter":"B","content":"产品发生7天内“三包”退货","answer":true},{"letter":"C","content":"个人原因申请退款（如觉得没必要购买）","answer":false}],"answer":"B"},{"type":"choice","question":"30、消费者小A于2020年10月1号购买了一台P40，并随新机购买了一年延长服务宝，请问如果这台P40在正常情况下，保修期到什么时候截止？","options":[{"letter":"A","content":"2021年10月1日0:00","answer":false},{"letter":"B","content":"2021年10月1日24:00","answer":false},{"letter":"C","content":"2022年10月2日24:00","answer":true},{"letter":"D","content":"2022年10月2日0:00","answer":false}],"answer":"C"},{"type":"choice","question":"31、以下能联系到华为人工客服的方式有哪些？","options":[{"letter":"A","content":"4.0038038E9","answer":false},{"letter":"B","content":"950801","answer":true},{"letter":"C","content":"950800","answer":true},{"letter":"D","content":"950805","answer":true}],"answer":"BCD"},{"type":"choice","question":"32、在于用户沟通中做法正确的是？","options":[{"letter":"A","content":"需结合与用户互动的具体场景，灵活使用流程，不涉及的场景可略过；","answer":true},{"letter":"B","content":"遇到投诉问题直接告诉用户你投诉也没用，政策/流程就是这么规定的","answer":false},{"letter":"C","content":"在服务过程中以用户体验为先，保持良好心态和专业的表达，及时响应用户；","answer":true}],"answer":"AC"},{"type":"choice","question":"33、用户在官网的服务与支持找到哪些内容？","options":[{"letter":"A","content":"精选内容推荐","answer":true},{"letter":"B","content":"产品支持","answer":true},{"letter":"C","content":"探索更多华为服务","answer":true},{"letter":"D","content":"常见服务","answer":true},{"letter":"E","content":"服务公告与政策","answer":true}],"answer":"ABCDE"},{"type":"choice","question":"34、坐席打开用户的历史服务工单列表，展开一个SR单并移动鼠标到服务工单上，弹出浮层显示工单的哪些信息","options":[{"letter":"A","content":"服务工单单号","answer":true},{"letter":"B","content":"状态","answer":true},{"letter":"C","content":"业务领域","answer":true},{"letter":"D","content":"诉求类型","answer":true},{"letter":"E","content":"诉求描述","answer":true},{"letter":"F","content":"产品信息","answer":true},{"letter":"G","content":"业务类型","answer":true}],"answer":"ABCDEFG"},{"type":"choice","question":"35、知识密级包含？","options":[{"letter":"A","content":"外部公开","answer":true},{"letter":"B","content":"内部公开","answer":true},{"letter":"C","content":"秘密","answer":true},{"letter":"D","content":"机密","answer":false}],"answer":"ABC"},{"type":"choice","question":"36、知识库可按照哪几种方式进行排序？","options":[{"letter":"A","content":"区域","answer":false},{"letter":"B","content":"时间","answer":true},{"letter":"C","content":"相关度","answer":true},{"letter":"D","content":"评分","answer":true},{"letter":"E","content":"浏览量","answer":true}],"answer":"BCDE"},{"type":"choice","question":"37、投诉处理的步骤有","options":[{"letter":"A","content":"跟进闭环","answer":true},{"letter":"B","content":"安抚顾客","answer":true},{"letter":"C","content":"了解需求","answer":true},{"letter":"D","content":"核实原因","answer":true},{"letter":"E","content":"预处理","answer":true},{"letter":"F","content":"处理解决","answer":true}],"answer":"ABCDEF"},{"type":"choice","question":"38、服务倍贴心手机产品可以享受的免费的服务包含以下哪些？","options":[{"letter":"A","content":"清洁","answer":true},{"letter":"B","content":"贴膜","answer":true},{"letter":"C","content":"保养","answer":true},{"letter":"D","content":"升级服务","answer":true}],"answer":"ABCD"},{"type":"choice","question":"39产品自燃/爆炸/漏电是指：因我司生产销售的产品出现的电池鼓包，并引发漏电、自燃、爆炸等导致用户财产损失、消费者索赔等，主要场景包含：","options":[{"letter":"A","content":"终端产品电源适配器自燃/爆炸，导致用户财物损失。","answer":true},{"letter":"B","content":"终端产品接口（尾插/充电接口/充电线）烧焦烧毁，无人员伤亡。","answer":true},{"letter":"C","content":"终端产品（主机/电源适配器）电池鼓包引发漏电/自燃/爆炸，导致用户财物损失。","answer":true}],"answer":"ABC"},{"type":"choice","question":"40、多次服务投诉，涉及到的场景有：","options":[{"letter":"A","content":"用户在重点看护微博下评论超过3条，投诉未解决可直接升级。","answer":true},{"letter":"B","content":"用户在心声社区发帖，回复超过30可直接升级疑似危机。","answer":true},{"letter":"C","content":"普通微博用户，发布服务投诉类微博未解决时，发帖大于3次或某一次转发+评论次数超30可直接升级。","answer":true},{"letter":"D","content":"微博粉丝数超过10W用户，发布服务投诉类微博可直接升级。","answer":true}],"answer":"ABCD"},{"type":"choice","question":"41、小张在接线中听不懂用户说的方言，小张可以怎么处理？","options":[{"letter":"A","content":"抱歉，因为对您当地方言不太了解，为了更好地帮助您，我这边帮您查询一下您当地的服务中心来协助您进行处理，您看可以吗？(并短信发送此话术与服务店查询方式）若仍无法辨别，通话/会话中告知用户，发送具体查询服务店的方式，礼貌挂机/结束会话即可。","answer":true},{"letter":"B","content":"您好，我们这边是全国客服中心，可能对您当地方言不太了解，辛苦您这边使用普通话重新帮我描述下问题，可以吗？","answer":true},{"letter":"C","content":"您好，您看您是否方便让您身边的家人或朋友使用普通话协助您进行描述呢？","answer":true}],"answer":"ABC"},{"type":"choice","question":"42、以下哪些属于电源与功耗的业务范围描述？","options":[{"letter":"A","content":"关于各个应用的电池使用情况、电池设置、省电模式、电源计划（平衡、性能、高性能）等相关问题。","answer":true},{"letter":"B","content":"关于耗电类相关问题。","answer":true},{"letter":"C","content":"关于睡眠与休眠的相关问题。","answer":true}],"answer":"ABC"},{"type":"choice","question":"43、备份数据的方式有（ ）","options":[{"letter":"A","content":"手机克隆","answer":true},{"letter":"B","content":"华为云备份","answer":true},{"letter":"C","content":"使用手机助手备份","answer":true},{"letter":"D","content":"备份至外部存储卡","answer":true}],"answer":"ABCD"},{"type":"choice","question":"44在（ ）场景需要备份数据。","options":[{"letter":"A","content":"恢复出厂设置","answer":true},{"letter":"B","content":"更换手机","answer":true},{"letter":"C","content":"送修/寄修","answer":true},{"letter":"D","content":"升级系统","answer":true}],"answer":"ABCD"},{"type":"choice","question":"45、非故障机来电场景，引导用户通过访问以下哪个应用可以建立诊断分析连接？","options":[{"letter":"A","content":"手机管家","answer":false},{"letter":"B","content":"我的华为App","answer":true},{"letter":"C","content":"服务App","answer":true},{"letter":"D","content":"华为手机助手","answer":false}],"answer":"BC"},{"type":"choice","question":"46用户反馈来电故障机已经收到了诊断分析短信但手机并没有弹出服务条款，请问如何处理？","options":[{"letter":"A","content":"引导用户排查手机当前是否出现无法连接网络情况","answer":true},{"letter":"B","content":"引导用户将“信息”应用升级至9.1.6.366及以上","answer":true},{"letter":"C","content":"引导用户排查手机当前系统时间是否不正确","answer":true},{"letter":"D","content":"直接告知用户连接代码，并在“诊断分析”界面中手动输入","answer":false}],"answer":"ABC"},{"type":"choice","question":"47哪些方案属于尝试性方案，是否有定义？","options":[{"letter":"A","content":"根据当通用户反馈问题是否解决，判断是否为需要验证回电场景","answer":true},{"letter":"B","content":"提供完整方案后，先与用户确认问题是否解决，如用户明确好了/可以了/没问题了等问题已经解决，则不需要验证","answer":true},{"letter":"C","content":"尝试性方案具体每个场景质检无法定义","answer":true},{"letter":"D","content":"用户表示还不确定/得再观察一下，则需要回电","answer":true}],"answer":"ABCD"},{"type":"choice","question":"48要求外呼场景包括哪些场景","options":[{"letter":"A","content":"解答错误自纠","answer":true},{"letter":"B","content":"排查方案需挂机操作","answer":true},{"letter":"C","content":"用户辱骂涉及业务问题","answer":true},{"letter":"D","content":"用户要求回电跟进","answer":true},{"letter":"E","content":"可以听清用户问题，沟通中断线回拨","answer":true},{"letter":"F","content":"用户对于方案不满意勉强挂机","answer":false},{"letter":"G","content":"故障解决需回电验证","answer":true}],"answer":"ABCDEG"},{"type":"choice","question":"49、无线车充不充电，指示灯不亮，应如何排查？","options":[{"letter":"A","content":"确认无线车充是否使用了标配车充电源线或者Type-C口充电线，是否无损伤、工作正常。","answer":true},{"letter":"B","content":"确认标配车充电源线或者Type-C口充电线是否插紧。","answer":true},{"letter":"C","content":"确认车内点烟器口是否正常供电，使用其他车载充电器进行排查确认。","answer":true}],"answer":"ABC"},{"type":"choice","question":"50、以下关于M-Pencil的描述正确的是","options":[{"letter":"A","content":"闪连快充，插入USB Type-C接口，就可以轻松连接并充电","answer":false},{"letter":"B","content":"M-Pencil支持磁吸配对，轻轻一贴就能充电","answer":true},{"letter":"C","content":"充电1小时即可充满，可用10小时","answer":true},{"letter":"D","content":"支持双击笔身，可切换笔刷和橡皮檫","answer":true}],"answer":"BCD"},{"type":"judge","question":"51华为的体验店和服务店是一样的，用户可以购买和维修产品。","answer":"错误"},{"type":"judge","question":"52、华为为了提升用户的售后体验，降低用户的维修成本，展开了各类维修活动供用户选择","answer":"正确"},{"type":"judge","question":"53、简瑶来电告知坐席自己的手机黑屏了无法使用，希望帮助查询服务门店，坐席帮助查询服务门店后告知挂机","answer":"错误"},{"type":"judge","question":"54、坐席接到用Mate RS 保时捷设计的用户，询问用户的产品型号后直接转接保时捷对接","answer":"错误"},{"type":"judge","question":"55、坐席在接通电话时，语气轻快，语调上扬，在沟通时面带微笑","answer":"正确"},{"type":"judge","question":"56、在用户进线中，主动为客户服务，自觉性的服务客户。","answer":"正确"},{"type":"judge","question":"57、林安买了matebook X，她自己想要查询保修期，她可以在官网中的保修期及权益查询中查询到","answer":"正确"},{"type":"judge","question":"58、简瑶来电询问坐席是否可以帮助她查询手机的真伪，坐席告知可以帮助用户用设备的SN查询到设备的保修期，手机的真伪建议用户可以进入工信网查询真伪","answer":"正确"},{"type":"judge","question":"59、用户来电时，查看用户历史服务工单，未关闭的单据不会优先置顶","answer":"错误"},{"type":"judge","question":"60、进入工单视图界面，左侧点击服务工单，进入我的待办页签，搜索框输入用户邮箱、电话号码、姓名，就可以搜索到对应的服务工单","answer":"正确"},{"type":"judge","question":"61、服务工单选择疑似危机后，会显示“疑似危机分类”且为必选","answer":"正确"},{"type":"judge","question":"62、产品最新知识是按照时间进行排序的。","answer":"正确"},{"type":"judge","question":"63、知识库问题搜索时，用句子进行搜索，结果更准确","answer":"错误"},{"type":"judge","question":"64、知识库内容可以截图，截图内容没有任何水印标记","answer":"错误"},{"type":"judge","question":"65、融合产品（手表、手环等）开通的云服务业务，非云服务投诉队列处理","answer":"正确"},{"type":"judge","question":"66、服务门店加价、捆绑问题请升级售后投诉队列","answer":"正确"},{"type":"judge","question":"67、用户投诉服务店工作人员态度有问题需升级至人员投诉组","answer":"错误"},{"type":"judge","question":"68、服务日的活动时间是每个月第一个连续的周五周六周日","answer":"正确"},{"type":"judge","question":"69、为了感谢消费者对华为品牌的认可，继续传递华为品牌温度，树立华为服务体验标杆，开展华为服务日活动","answer":"正确"},{"type":"judge","question":"70、寄修时，如选择自主寄件，提醒用户选择到付；如果已自付运费，无法退还；可以尝试选择价保，快递可能会被拒收","answer":"错误"},{"type":"judge","question":"71、闭单前详细的内容记录清楚，闭单后不再支持编辑更新内容","answer":"正确"},{"type":"judge","question":"72、云备份只能在连接WLAN网络下操作，不可以连接热点操作","answer":"错误"},{"type":"judge","question":"73、“相册”在数据和WLAN环境下均可同步至云端","answer":"正确"},{"type":"judge","question":"74、使用本地备份方式备份数据后，即使恢复出厂设置数据也不会丢失","answer":"错误"},{"type":"judge","question":"75、远程诊断工具只能够检测用户设备是否存在故障问题并进行修复，无法智能推荐设备使用技巧或功能设置建议","answer":"错误"},{"type":"judge","question":"76、由于用户升级到HarmonyOS 2.0系统版本，系统底层结构发生变动，无法使用远程诊断工具进行设备远程检测，只能引导用户访问我的华为App进行自助检测","answer":"正确"},{"type":"judge","question":"77、在跟用户的沟通中给用户提供了错误方案，挂机后需要回电更正一下","answer":"正确"},{"type":"judge","question":"78、用户明确无需回电，但坐席提供最终方案后，用户有明确不满或抱怨情绪，坐席仍要回电","answer":"错误"},{"type":"judge","question":"79、碎屏服务宝随新机购买碎屏服务宝无需验机，可直接在销售渠道随新机购买","answer":"正确"},{"type":"judge","question":"80、购机15天内更换新机的，延长服务宝的权益将转移至所换新设备上，有效期从换机当天起重新计算（ ）","answer":"正确"},{"type":"choice","question":"1、以下哪个不是L1服务工程师的职责？","options":[{"letter":"A","content":"判断业务分类、记录业务问题、处理工单","answer":false},{"letter":"B","content":"对于业务咨询问题直接建议用户去服务中心询问","answer":true},{"letter":"C","content":"指引前往服务中心处理硬件的故障问题","answer":false}],"answer":"B"},{"type":"choice","question":"2、坐席将工单升级时，没有哪个选项？","options":[{"letter":"A","content":"站点","answer":true},{"letter":"B","content":"队列","answer":false},{"letter":"C","content":"个人","answer":false}],"answer":"A"},{"type":"choice","question":"3、以下哪种方式无法查询到版本更新日志？","options":[{"letter":"A","content":"快捷查询入口-版本升级日志","answer":false},{"letter":"B","content":"产品参数中选择对应产品查询","answer":true},{"letter":"C","content":"搜索框输入产品型号+版本日志","answer":false}],"answer":"B"},{"type":"choice","question":"4、录单页查询用户信息，搜索到用户后查看行为统计，默认显示几天的行为统计数据","options":[{"letter":"A","content":"90天","answer":false},{"letter":"B","content":"30天","answer":false},{"letter":"C","content":"7天","answer":true}],"answer":"C"},{"type":"choice","question":"5、如何使用一站式工作台2.0催单？","options":[{"letter":"A","content":"点开需要催促的SR单，在SR单按钮区域点击“催单”即可","answer":true},{"letter":"B","content":"在客户SR总览区域的未关闭工单卡片找到“小铃铛”点击即可催单","answer":false}],"answer":"A"},{"type":"choice","question":"6、简瑶来电表示想要预约服务店，坐席操作正确的是？","options":[{"letter":"A","content":"核对用户姓名，电话，地址，预约时间和预约门店信息","answer":true},{"letter":"B","content":"核对用户地址，预约时间和预约门店信息","answer":false},{"letter":"C","content":"核对用户地址和预约时间","answer":false}],"answer":"A"},{"type":"choice","question":"7、以下哪种关键信息不支持在快捷入口查询？","options":[{"letter":"A","content":"蓝牙兼容性","answer":false},{"letter":"B","content":"产品特性","answer":false},{"letter":"C","content":"充电兼容性","answer":false},{"letter":"D","content":"体验店","answer":true},{"letter":"E","content":"服务店","answer":false},{"letter":"F","content":"保修期及保修凭证","answer":false},{"letter":"G","content":"APP可用性","answer":false}],"answer":"D"},{"type":"choice","question":"8、无忧服务含（）年（）次意外服务宝和1年延长服务宝","options":[{"letter":"A","content":"1,2","answer":false},{"letter":"B","content":"1,1","answer":false},{"letter":"C","content":"2,2","answer":true},{"letter":"D","content":"2,1","answer":false}],"answer":"C"},{"type":"choice","question":"9、以下哪一项是联络中心的服务宗旨？","options":[{"letter":"A","content":"将每一次服务变成消费者温暖的回忆","answer":true},{"letter":"B","content":"WARM","answer":false},{"letter":"C","content":"让每一次服务成为消费者最温暖的回忆","answer":false},{"letter":"D","content":"以客户为中心","answer":false}],"answer":"A"},{"type":"choice","question":"10、关于疑似危机工单升级时效说法错误的是（ ）","options":[{"letter":"A","content":"非互联网升级SLA：半小时","answer":false},{"letter":"B","content":"互联网升级SLA: 30分钟内指定专人邮件通报地区部危机处理专员，并建单跟踪，等待用户回复。获取用户信息后在2个小时内进行升级至危机队列.","answer":true},{"letter":"C","content":"所有疑似危机场景，坐席不主动承诺回电时效；若坐席告知用户后期有专人回电处理，则需要在工单中注明，并报备处理。","answer":false},{"letter":"D","content":"对来电人提出要求知晓回电时间可告知：工作时间内:(周一至周日8:30-18:00）预计最快2小时、最晚24小时工作人员会与您取得联系，请您耐心等待；非工作时间:(周一至周日18:00以后）预计最快明日10:00、最晚18:00工作人员会与您取得联系","answer":false}],"answer":"B"},{"type":"choice","question":"11、如用户进线问题为：“手机与手机一碰传文件怎么弄”，录单时应选择：","options":[{"letter":"A","content":"通信与连接-有线连接","answer":false},{"letter":"B","content":"通信与连接-Huawei Share","answer":false},{"letter":"C","content":"通信与连接-超级终端/多设备控制中心","answer":false},{"letter":"D","content":"通信与连接-NFC","answer":true}],"answer":"D"},{"type":"choice","question":"12、用户表示笔记本麦克风打开了没有声音。请问该问题属于声音与视频下哪个业务类型？","options":[{"letter":"A","content":"视频播放","answer":false},{"letter":"B","content":"声音播放","answer":false},{"letter":"C","content":"声音录入","answer":true}],"answer":"C"},{"type":"choice","question":"13、关于远程诊断工具中的功耗类检测，以下说法错误的是？","options":[{"letter":"A","content":"可以检测并展示设备程序耗电排行情况","answer":false},{"letter":"B","content":"可以检测并展示用户设备近一周的耗电情况","answer":false},{"letter":"C","content":"可以检测并展示应用程序具体耗电的电量值","answer":false},{"letter":"D","content":"可以检测并分别展示设备硬件或系统软件的具体耗电信息","answer":true}],"answer":"D"},{"type":"choice","question":"14、以下关于“闭环服务，拒绝机械”理解不正确的是？","options":[{"letter":"A","content":"持续追踪工单","answer":false},{"letter":"B","content":"了解用户暗示需求","answer":true},{"letter":"C","content":"以用户为主","answer":false},{"letter":"D","content":"不要重复话术","answer":false}],"answer":"B"},{"type":"choice","question":"15、林安需要查询自己电脑的主板价格，她提供哪个信息是无法查询的？","options":[{"letter":"A","content":"序列号","answer":false},{"letter":"B","content":"设备型号","answer":false},{"letter":"C","content":"华为账号","answer":true}],"answer":"C"},{"type":"choice","question":"16、林安最近想要去服务门店，她可以在官网的哪里进行预约呢？","options":[{"letter":"A","content":"常见服务","answer":true},{"letter":"B","content":"产品支持","answer":false},{"letter":"C","content":"探索更多华为服务","answer":false},{"letter":"D","content":"精选内容推荐","answer":false}],"answer":"A"},{"type":"choice","question":"17、在质检管控中，归类错误的是：","options":[{"letter":"A","content":"顾客关键错误-服务礼仪","answer":false},{"letter":"B","content":"业务关键错误-记录与闭单","answer":false},{"letter":"C","content":"合规关键错误-合规","answer":false},{"letter":"D","content":"业务关键错误-业务解答","answer":true}],"answer":"D"},{"type":"choice","question":"18、无忧服务宝在华为商城补购的条件是","options":[{"letter":"A","content":"订单号生成到订单签收时间+1自然日24：00之前完成保险的补购","answer":true},{"letter":"B","content":"签收次日起算7天内","answer":false},{"letter":"C","content":"签收次日起算5天内","answer":false},{"letter":"D","content":"订单号生成到订单签收时间+3自然日24：00之前完成保险的补购","answer":false}],"answer":"A"},{"type":"choice","question":"19、小A来电咨询自己的手机之前维修过麦克风是否可以补购延长服务宝，以下说法正确的是（）","options":[{"letter":"A","content":"如果产品未购买过华为延长服务宝，在华为授权维修服务中心维修后仍在保，且仍在购机十个月内，可在华为客户服务中心购买华为延长服务宝。","answer":true},{"letter":"B","content":"如果想要购买延长服务宝，可以前往华为服务中心验机补购。","answer":false},{"letter":"C","content":"已经维修过的设备不在补购范围内","answer":false}],"answer":"A"},{"type":"choice","question":"20、华为官网服务与支持的网址是以下哪一个？","options":[{"letter":"A","content":"https://cloud.huawei.com","answer":false},{"letter":"B","content":"https://consumer-tkb.huawei.com/","answer":false},{"letter":"C","content":"https://consumer.huawei.com/cn/support/","answer":true}],"answer":"C"},{"type":"choice","question":"21、录单页查询用户信息，搜索结果为单个互联网用户，特殊标识显示为什么？","options":[{"letter":"A","content":"服务用户","answer":false},{"letter":"B","content":"云服务用户","answer":false},{"letter":"C","content":"互联网用户","answer":true}],"answer":"C"},{"type":"choice","question":"22、云服务疑似危机场景：涉及云服务扣款/账号/功能使用争议导致的场景不包括下列哪个场景( )","options":[{"letter":"A","content":"媒体曝光","answer":false},{"letter":"B","content":"多次服务投诉","answer":false},{"letter":"C","content":"政府职能机构投诉转办","answer":false},{"letter":"D","content":"威胁投诉315","answer":true}],"answer":"D"},{"type":"choice","question":"23、以下哪个选项用户可以通过寄修支持？","options":[{"letter":"A","content":"出具检测单","answer":false},{"letter":"B","content":"退货","answer":false},{"letter":"C","content":"换货","answer":false},{"letter":"D","content":"检测维修","answer":true}],"answer":"D"},{"type":"choice","question":"24、在服务现场中，以下哪种行为是不可以出现的：","options":[{"letter":"A","content":"提前到现场，调试好通讯设备","answer":false},{"letter":"B","content":"在会议室中大声喧哗，离开的时候投影开着","answer":true},{"letter":"C","content":"在下班前，电脑关机，将自己的个人物品整理好放入柜子中","answer":false}],"answer":"B"},{"type":"choice","question":"25、除去搜索关键词的方式进行知识搜索外，若能知道一条知识的哪个信息，也可以通过该信息快速检索","options":[{"letter":"A","content":"身份ID","answer":false},{"letter":"B","content":"知识编号","answer":false},{"letter":"C","content":"知识ID","answer":true}],"answer":"C"},{"type":"choice","question":"26、对于京东客服来电，坐席怎么建单？","options":[{"letter":"A","content":"直接在来电号码下建单","answer":false},{"letter":"B","content":"需用准确的用户号码建单","answer":true}],"answer":"B"},{"type":"choice","question":"27、小赵接到用户的电话，用户在电话中骂他，小赵该怎么处理呢？","options":[{"letter":"A","content":"提醒用户2次，挂机","answer":false},{"letter":"B","content":"直接挂断","answer":false},{"letter":"C","content":"提醒用户3次，挂机","answer":true}],"answer":"C"},{"type":"choice","question":"28、林安想要购买matebook X，想要了解具体的产品参数，她可以在哪里查询呢？","options":[{"letter":"A","content":"产品支持","answer":true},{"letter":"B","content":"常见服务","answer":false},{"letter":"C","content":"探索更多华为服务","answer":false},{"letter":"D","content":"精选内容推荐","answer":false}],"answer":"A"},{"type":"choice","question":"29、对于京东客服来电，怎么处理呢？","options":[{"letter":"A","content":"非智慧屏产品先婉拒","answer":true},{"letter":"B","content":"直接处理","answer":false}],"answer":"A"},{"type":"choice","question":"30、简瑶刚买了watch 3 手表，她想要知道一些使用攻略，请问她可以在哪里查询呢？","options":[{"letter":"A","content":"精选内容推荐","answer":false},{"letter":"B","content":"常见服务","answer":false},{"letter":"C","content":"产品支持","answer":true},{"letter":"D","content":"探索更多华为服务","answer":false}],"answer":"C"},{"type":"choice","question":"31、以下哪个活动不属于服务体验日活动？","options":[{"letter":"A","content":"互动传真心","answer":false},{"letter":"B","content":"配件更随心","answer":false},{"letter":"C","content":"费用更省心","answer":false},{"letter":"D","content":"回馈更温心","answer":true},{"letter":"E","content":"取机更舒心","answer":false},{"letter":"F","content":"维修更安心","answer":false},{"letter":"G","content":"服务倍贴心","answer":false}],"answer":"D"},{"type":"choice","question":"32、如何通过“以形践言”的方式让用户感受到我们的服务意识？","options":[{"letter":"A","content":"主动服务，换位思考","answer":true},{"letter":"B","content":"体贴服务，温柔否定","answer":false},{"letter":"C","content":"专业服务，通俗表达","answer":true},{"letter":"D","content":"闭环服务，拒绝机械","answer":true}],"answer":"ACD"},{"type":"choice","question":"33、用户进电咨询智慧屏的机身内存有多大，请问应该选择的SR大小类是？","options":[{"letter":"A","content":"智慧屏\u003e开关机与运行\u003e存储空间管理","answer":true},{"letter":"B","content":"智慧屏\u003e电源与功耗\u003e功耗","answer":false},{"letter":"C","content":"智慧屏\u003e外观与硬件\u003e外观","answer":false},{"letter":"D","content":"智慧屏\u003e电源与功耗\u003e设备温度","answer":false}],"answer":"A"},{"type":"choice","question":"34、苹果手机图片保存在云端，进行手机克隆时，应该如何操作","options":[{"letter":"A","content":"无法克隆","answer":false},{"letter":"B","content":"先将图片下载到本地，然后在进行克隆","answer":true},{"letter":"C","content":"直接进行手机克隆","answer":false}],"answer":"B"},{"type":"choice","question":"35、用户来电询问高级工程师回复的时效","options":[{"letter":"A","content":"我们的高级工程师/高级客户经理预计最快2小时，最晚24小时联系您，请您耐心等待。","answer":true},{"letter":"B","content":"您这边保持电话畅通就可以的","answer":false},{"letter":"C","content":"我们的高级工程师/高级客户经理预计最快明日10:00，最晚明日18:00前联系您，请您耐心等待。","answer":true}],"answer":"AC"},{"type":"choice","question":"36、小王之前来电问题没有解决，之前的坐席告知有人会联系他，他再次来电询问什么时候联系他，对于这种情况坐席进行什么操作呢？","options":[{"letter":"A","content":"353流程","answer":false},{"letter":"B","content":"升级","answer":false},{"letter":"C","content":"断线","answer":false},{"letter":"D","content":"催单","answer":true}],"answer":"D"},{"type":"choice","question":"24、关于远程诊断工具，“充电”\u003e“电池”检测功能，以下说法正确的是？","options":[{"letter":"A","content":"可以诊断并检测到用户设备电池的循环次数","answer":true},{"letter":"B","content":"可以诊断并检测到用户设备电池的出厂地址","answer":false}],"answer":"A"},{"type":"choice","question":"25、关于远程诊断工具，第三方应用检测，以下说法错误的是？","options":[{"letter":"A","content":"可以检测抖音短视频","answer":false},{"letter":"B","content":"可以检测第三方应用权限设置问题","answer":true},{"letter":"C","content":"可以检测第三方应用卡顿无响应问题","answer":false},{"letter":"D","content":"可以检测微信卡顿故障","answer":false}],"answer":"B"},{"type":"choice","question":"26、用户反馈手机系统运行反应慢、卡顿不流畅，坐席可以选择以下哪个远程诊断检测选项进行故障诊断？","options":[{"letter":"A","content":"应用卡死/闪退","answer":false},{"letter":"B","content":"性能","answer":true},{"letter":"C","content":"稳定性","answer":false},{"letter":"D","content":"功耗","answer":false}],"answer":"B"},{"type":"choice","question":"27、简瑶进线询问华为mate50 pro 素皮版8+256的主板原价","options":[{"letter":"A","content":"3499","answer":true},{"letter":"B","content":"3999","answer":false}],"answer":"A"},{"type":"choice","question":"28、方案中涉及恢复出厂设置、重启、还原所有设置、交叉排查等操作方案，会导致通话中断，属于要求外呼场景还是建议外呼场景","options":[{"letter":"A","content":"建议外呼场景","answer":false},{"letter":"B","content":"要求外呼场景","answer":true}],"answer":"B"},{"type":"choice","question":"20用户进电咨询自己的智慧屏如何设置艺术屏保，请问应该选择的SR大小类是？","options":[{"letter":"A","content":"智慧屏\u003e华为应用\u003e媒体中心","answer":false},{"letter":"B","content":"智慧屏\u003e其他系统设置\u003e艺术屏保","answer":true},{"letter":"C","content":"智慧屏\u003e产品整体\u003e其他","answer":false},{"letter":"D","content":"智慧屏\u003e其他系统设置\u003e更多系统设置","answer":false}],"answer":"B"},{"type":"choice","question":"30、用户反馈相片打印机APP无法下载，坐席小明应该","options":[{"letter":"A","content":"告知用户产品已经上市很久，现在已经停产，故无法使用。","answer":false},{"letter":"B","content":"告知用户可以在官网进行下载","answer":false},{"letter":"C","content":"发送知识库中的网盘链接引导用户下载使用","answer":true}],"answer":"C"},{"type":"choice","question":"7、知识库如何返回首页？","options":[{"letter":"A","content":"点击“猫头鹰”logo","answer":true},{"letter":"B","content":"点击页面上端的返回首页键","answer":false},{"letter":"C","content":"点击浏览器返回按键","answer":false}],"answer":"A"},{"type":"choice","question":"13、小明昨日有一个异常数据，组长要求其暂停接线回听录音找一下问题，小明可能签的状态是","options":[{"letter":"A","content":"签出","answer":false},{"letter":"B","content":"辅导","answer":true},{"letter":"C","content":"会议","answer":false},{"letter":"D","content":"小休","answer":false}],"answer":"B"},{"type":"choice","question":"2、以下哪个是可以在跟用户沟通中出现的？","options":[{"letter":"A","content":"你是在为难我，我听不懂你在说什么","answer":false},{"letter":"B","content":"对你这样的敏感客户，我们就是这样规定的","answer":false},{"letter":"C","content":"非常抱歉，刚才尝试帮您转接高级工程师，由于系统队列繁忙，没有转接成功，在咨询的过程中，我帮您查询到其他的方案，我带领您再尝试一下可以吗？","answer":true},{"letter":"D","content":"大点声说，我这边听不到，我听不清怎么解决问题啊","answer":false}],"answer":"C"},{"type":"choice","question":"3、简瑶的电脑蓝屏了，她可以在哪里找到解决方法呢？","options":[{"letter":"A","content":"产品支持","answer":true},{"letter":"B","content":"常见服务","answer":false},{"letter":"C","content":"探索更多华为服务","answer":false},{"letter":"D","content":"精选内容推荐","answer":false}],"answer":"A"},{"type":"choice","question":"19、以下哪些产品可以选择寄修？","options":[{"letter":"A","content":"香港购买的华为手机","answer":false},{"letter":"B","content":"车载固定台产品","answer":false},{"letter":"C","content":"单独售卖的配件","answer":true},{"letter":"D","content":"智慧屏","answer":false}],"answer":"C"},{"type":"choice","question":"20、信息资产受损说法错误的是（ ）","options":[{"letter":"A","content":"消费者因门店服务原因导致资料丢失，消费者要求找回资料、赔偿损失、媒体曝光、通过职能部门/法律途径维权等。","answer":false},{"letter":"B","content":"消费者在使用我司产品过程中，因产品使用、故障、升级等原因导致资料丢失，消费者要求找回资料、赔偿损失、媒体曝光、通过职能部门/法律途径维权。","answer":false},{"letter":"C","content":"用户表示自己手机图库上的数据丢失，直接升级疑似危机处理","answer":true}],"answer":"C"},{"type":"choice","question":"21、小林来电询问怎么去华为面试，坐席该怎么处理呢？","options":[{"letter":"A","content":"根据知识库中回复口径回复","answer":true},{"letter":"B","content":"直接拒绝用户","answer":false},{"letter":"C","content":"不予理睬","answer":false}],"answer":"A"},{"type":"choice","question":"29、安居智能摄像机红灯慢闪是指？","options":[{"letter":"A","content":"摄像机与APP配对连接中","answer":false},{"letter":"B","content":"等待网络配置","answer":true},{"letter":"C","content":"摄像机连接WLAN过程中","answer":false},{"letter":"D","content":"摄像机联网成功","answer":false}],"answer":"B"},{"type":"choice","question":"4、个人首页我的待办中工单显示红色代表什么意思？","options":[{"letter":"A","content":"工单自创建起已经超48小时","answer":true},{"letter":"B","content":"工单自创建起已经超24小时，但未超48小时","answer":false},{"letter":"C","content":"工单自创建起在24小时内","answer":false}],"answer":"A"},{"type":"choice","question":"5、产品参数查询，可同时选择（）款同一类型的产品进行对比？","options":[{"letter":"A","content":"4","answer":false},{"letter":"B","content":"5","answer":false},{"letter":"C","content":"3","answer":true},{"letter":"D","content":"2","answer":false}],"answer":"C"},{"type":"choice","question":"6、如何查询知识历史版本","options":[{"letter":"A","content":"点开一篇知识库文章－点击题目右边的知识详情－点击版本后面的历史版本","answer":true},{"letter":"B","content":"点开一篇知识库文章－点击分屏－历史版本","answer":false},{"letter":"C","content":"知识搜索栏搜索对应知识+历史版本","answer":false}],"answer":"A"},{"type":"choice","question":"7、产品参数速查目前不支持的是","options":[{"letter":"A","content":"台灯","answer":true},{"letter":"B","content":"手机","answer":false},{"letter":"C","content":"平板","answer":false},{"letter":"D","content":"路由器","answer":false},{"letter":"E","content":"PC","answer":false},{"letter":"F","content":"穿戴","answer":false}],"answer":"A"},{"type":"choice","question":"8、知识库如何分屏使用？","options":[{"letter":"A","content":"任意点开一个知识-点击分屏","answer":false},{"letter":"B","content":"任意点开一个知识合集-分屏","answer":false},{"letter":"C","content":"搜索任意关键字-从跳转切换为-分屏","answer":true}],"answer":"C"},{"type":"choice","question":"9、以下哪一项不属于安抚三部曲","options":[{"letter":"A","content":"感知共情","answer":false},{"letter":"B","content":"场景共情","answer":false},{"letter":"C","content":"体验共情","answer":true},{"letter":"D","content":"行为共情","answer":false}],"answer":"C"},{"type":"choice","question":"9、以下哪一项不属于安抚三部曲","options":[{"letter":"A","content":"情绪安抚","answer":false},{"letter":"B","content":"灰度安抚","answer":true},{"letter":"C","content":"行动安抚","answer":false},{"letter":"D","content":"问题安抚","answer":false}],"answer":"B"},{"type":"choice","question":"10、以下哪个对服务中心的称呼可以告知消费者？","options":[{"letter":"A","content":"华为服务专营店","answer":false},{"letter":"B","content":"华为客户服务中心","answer":true},{"letter":"C","content":"华为服务旗舰店","answer":false},{"letter":"D","content":"华为综合服务中心","answer":false}],"answer":"B"},{"type":"choice","question":"11、以下不属于华为服务体验日可参与门店的选项是？","options":[{"letter":"A","content":"华为服务旗舰店","answer":false},{"letter":"B","content":"华为服务专营店","answer":false},{"letter":"C","content":"华为销服一体店","answer":true},{"letter":"D","content":"华为综合服务中心","answer":false}],"answer":"C"},{"type":"choice","question":"12、以下不可以在服务倍贴心享受免费外观清洁服务的产品有？","options":[{"letter":"A","content":"荣耀FlyPods系列指定型号","answer":false},{"letter":"B","content":"华为FreeBuds系列指定型号","answer":false},{"letter":"C","content":"智慧屏","answer":true},{"letter":"D","content":"华为或荣耀笔记本电脑","answer":false}],"answer":"C"},{"type":"choice","question":"13、维修更安心活动期间，符合获赠精美礼品的条件是？","options":[{"letter":"A","content":"到店维修因门店原因未能当天内修复","answer":true},{"letter":"B","content":"用户因时间问题需要第二天来拿","answer":false},{"letter":"C","content":"一个活动周期仅能参与一次","answer":false},{"letter":"D","content":"寄修不享受该活动","answer":false}],"answer":"A"},{"type":"choice","question":"14、配件更随心活动，描述正确的是？","options":[{"letter":"A","content":"优惠仅包括服务店华为品牌配件","answer":true},{"letter":"B","content":"非华为用户不可参与本活动","answer":false},{"letter":"C","content":"活动期间到店购买华为/荣耀品牌配件，立享9折优惠","answer":false},{"letter":"D","content":"一个活动周期仅能参与一次","answer":false}],"answer":"A"},{"type":"choice","question":"15、IPCC的登入地址是","options":[{"letter":"A","content":"10.8.7.22:8081","answer":false},{"letter":"B","content":"10.7.8.22:8081","answer":true},{"letter":"C","content":"cbg.huawei.com","answer":false}],"answer":"B"},{"type":"choice","question":"16、关于全方位保护用户隐私，描述错误的是？","options":[{"letter":"A","content":"输入连接码后弹出“同意条款”，不需要用户阅读完毕点同意也可进行共享","answer":true},{"letter":"B","content":"支付宝、银行APP等应用打开时坐席端界面会直接暂停共享并黑屏","answer":false},{"letter":"C","content":"用户点击暂停按钮后，坐席无法看到共享屏幕","answer":false},{"letter":"D","content":"微信、京东等应用打开时需用户二次授权","answer":false}],"answer":"A"},{"type":"choice","question":"17、消费者小A于2020年10月1号购买了一台P40，并随新机购买了一年延长服务宝，请问如果这台P40在正常情况下，保修期到什么时候截止？","options":[{"letter":"A","content":"2022年10月2日24:00","answer":true},{"letter":"B","content":"2022年10月2日0:00","answer":false},{"letter":"C","content":"2021年10月1日24:00","answer":false},{"letter":"D","content":"2021年10月1日0:00","answer":false}],"answer":"A"},{"type":"choice","question":"17、消费者小A于2020年10月1号购买了一台P40，三天后前往服务中心补购1年期的碎屏服务宝，请问如果这台P20在正常情况下，碎屏服务宝保修期到什么时候截止？","options":[{"letter":"A","content":"2021年10月1日24:00","answer":false},{"letter":"B","content":"2021年10月4日0:00","answer":false},{"letter":"C","content":"2021年10月1日0:00","answer":false},{"letter":"D","content":"2021年10月4日24:00","answer":true}],"answer":"D"},{"type":"choice","question":"24、如用户进线问题为：“我买的智慧屏要退货，申请已经通过了，为什么还没有人来找我拿？”录单时应选择：","options":[{"letter":"A","content":"线上销售-退货-退货申请","answer":false},{"letter":"B","content":"服务-服务渠道-预约上门","answer":false},{"letter":"C","content":"线上销售-退货-用户寄回","answer":true}],"answer":"C"},{"type":"choice","question":"28、ck030 50w无线车充搭配11v6A的车充，给mate 40 pro手机充电，功率可以达到多少w？","options":[{"letter":"A","content":"18w","answer":false},{"letter":"B","content":"50w","answer":true},{"letter":"C","content":"27w","answer":false},{"letter":"D","content":"40","answer":false}],"answer":"B"},{"type":"choice","question":"30、全景相机默认为哪个模式","options":[{"letter":"A","content":"水晶球","answer":false},{"letter":"B","content":"小行星","answer":false},{"letter":"C","content":"透视","answer":false},{"letter":"D","content":"鱼眼","answer":true}],"answer":"D"},{"type":"choice","question":"15、用户购机（）天内，可前往北京盈科服务中心，通过验机补购的方式补购碎屏服务宝","options":[{"letter":"A","content":"5","answer":false},{"letter":"B","content":"7","answer":true},{"letter":"C","content":"30","answer":false},{"letter":"D","content":"60","answer":false}],"answer":"B"},{"type":"choice","question":"16、以下（）情况下可以申请延长服务宝退款","options":[{"letter":"A","content":"个人原因申请退款（如觉得没必要购买）","answer":false},{"letter":"B","content":"产品15天换货","answer":false},{"letter":"C","content":"产品发生7天内“三包”退货","answer":true}],"answer":"C"},{"type":"choice","question":"17、多次服务投诉是指：涉及消费者投诉门店或线上人员服务、态度、维修质量、维修方案等场景，同一问题在一个顺延年内投诉（ ）。","options":[{"letter":"A","content":"三次未解决造成第四次投诉","answer":true},{"letter":"B","content":"两次未解决造成第三次投诉","answer":false}],"answer":"A"},{"type":"choice","question":"18、以下关于延长服务宝的说明，错误的是","options":[{"letter":"A","content":"购买后由华为提供原厂服务，如用户不方便到店，可提供配件邮寄给用户自行更换处理","answer":true},{"letter":"B","content":"保修期内对于非人为故障的维修，免收检测费、备件费及维修费","answer":false},{"letter":"C","content":"在三包法规定的标准保修服务期的基础上针对产品主机延长一年保修服务时间","answer":false},{"letter":"D","content":"附件类如电源适配器，电池，耳机等不享受延长服务宝，机电一体手机的内置电池除外","answer":false}],"answer":"A"},{"type":"choice","question":"19、产品自燃/爆炸/漏电不包含的场景是：","options":[{"letter":"A","content":"电池鼓包但是没有出现漏电/自燃/爆炸情况","answer":true},{"letter":"B","content":"终端产品电源适配器自燃/爆炸，导致用户财物损失。","answer":false},{"letter":"C","content":"终端产品（主机/电源适配器）电池鼓包引发漏电/自燃/爆炸，导致用户财物损失。","answer":false},{"letter":"D","content":"终端产品接口（尾插/充电接口/充电线）烧焦烧毁，无人员伤亡。","answer":false}],"answer":"A"},{"type":"choice","question":"20、产品自燃/爆炸/漏电说法错误的是（ ）","options":[{"letter":"A","content":"如果用户不愿意前往服务中心，可以不升级疑似危机。","answer":true},{"letter":"B","content":"升级队列为用户所在地代表处","answer":false},{"letter":"C","content":"无论用户是否愿意前往服务中心，都需要升级疑似危机。","answer":false},{"letter":"D","content":"不涉及人身伤害时，优先引导用户去服务中心。","answer":false}],"answer":"A"},{"type":"choice","question":"21、关于疑似危机下列说法错误的是（ ）","options":[{"letter":"A","content":"用户自用我司终端/反馈他人使用我司终端，在国外使用时产生疑似危机的场景，坐席接到用户疑似危机反馈时，按照信息收集模板收集相关信息后，转单至A地区部疑似危机处理专员队列。","answer":false},{"letter":"B","content":"前期疑似危机单处理时因未与用户协商一致关单，后续用户再次进线接受前期提供的处理方案的，热线坐席不可直接处理，需要升级疑似危机由疑似危机专员跟进处理。","answer":true},{"letter":"C","content":"有明确地方政府机构名称或受理编号，根据用户所在地将疑似危机单升级至对应的代表处跟进处理；无明确地方政府机构名称或受理编号，用户可提供相关投诉截图的，可升级至地区部疑似危机进行评估处理。","answer":false},{"letter":"D","content":"华为在各互联网电商平台自营的店铺，用户的咨询投诉均统一升级至电商客服跟进处理。电商客服L3无法完成问题处理闭环的，符合疑似危机场景的可以升级至地区部疑似危机队列寻求帮助。","answer":false}],"answer":"B"},{"type":"choice","question":"22、星星来电问题未解决进行了升级，升级的实效是多长时间呢？","options":[{"letter":"A","content":"当天下班前升级","answer":false},{"letter":"B","content":"当天8:00—18:00之间的工单，2H内升级","answer":true},{"letter":"C","content":"2H内升级","answer":false}],"answer":"B"},{"type":"choice","question":"23、从iPhone手机克隆至华为品牌手机，以下不可以克隆的内容有哪个","options":[{"letter":"A","content":"相册视频","answer":false},{"letter":"B","content":"联系人","answer":false},{"letter":"C","content":"相册图片","answer":false},{"letter":"D","content":"应用程序","answer":true}],"answer":"D"},{"type":"choice","question":"19、用户手机屏幕摔碎了，距离官方服务中心比较远，可以选择的维修方式是","options":[{"letter":"A","content":"送修","answer":false},{"letter":"B","content":"DIY维修","answer":false},{"letter":"C","content":"寄修","answer":true},{"letter":"D","content":"家门口小店维修","answer":false}],"answer":"C"},{"type":"choice","question":"25、从其他Android手机克隆至华为手机，以下不可以克隆的内容有哪个","options":[{"letter":"A","content":"联系人","answer":false},{"letter":"B","content":"通话记录","answer":false},{"letter":"C","content":"关联数据","answer":true},{"letter":"D","content":"日历（日程）","answer":false}],"answer":"C"},{"type":"choice","question":"27、锁屏密码忘记小王已提供最终方案需要恢复出厂坐席，用户有不满或抱怨情绪且用户勉强接受挂机，L1坐席小王基于用户体验进行回电，以下回电时效及回电次数正确的是？","options":[{"letter":"A","content":"24H2次","answer":true},{"letter":"B","content":"30min1次","answer":false},{"letter":"C","content":"48H2次","answer":false},{"letter":"D","content":"4H1次","answer":false}],"answer":"A"},{"type":"choice","question":"28、建议外呼场景不包括一下哪个场景","options":[{"letter":"A","content":"用户对于方案不满意勉强挂机","answer":false},{"letter":"B","content":"沟通业务问题时用户辱骂","answer":true},{"letter":"C","content":"主动帮用户核实信息","answer":false}],"answer":"B"},{"type":"choice","question":"29、坐席沟通中建议用户还原所有设置，用户表示挂机后尝试，此场景坐席应如何进行操作？","options":[{"letter":"A","content":"建议用户尝试，未解决可再次来电","answer":false},{"letter":"B","content":"用户表示自己尝试，无需回电","answer":false},{"letter":"C","content":"属于业务要求回电场景，需回电","answer":true}],"answer":"C"},{"type":"choice","question":"20、不属于PC服务店维修权限分级的是哪个选项？","options":[{"letter":"A","content":"2级","answer":true},{"letter":"B","content":"无级别","answer":false},{"letter":"C","content":"1级","answer":false},{"letter":"D","content":"0级","answer":false}],"answer":"A"},{"type":"choice","question":"21、提醒用户到店维修前的需要做的准备工作，不包含以下哪一个？","options":[{"letter":"A","content":"提醒用户备份设备相关数据","answer":false},{"letter":"B","content":"提醒用户电联售后","answer":false},{"letter":"C","content":"提醒用户开启维修模式","answer":true},{"letter":"D","content":"提醒用户携带购机凭证","answer":false}],"answer":"C"},{"type":"choice","question":"30、Tag有快速遗落提醒功能，可以实现蓝牙断开（ ）就可以快速提醒。","options":[{"letter":"A","content":"30秒","answer":false},{"letter":"B","content":"20秒","answer":false},{"letter":"C","content":"10秒","answer":false},{"letter":"D","content":"15秒","answer":true}],"answer":"D"},{"type":"choice","question":"22、媒体曝光是指：消费者已经联系媒体反馈该事件，并提供媒体联系方式。这里的媒体不包括：","options":[{"letter":"A","content":"执法机构","answer":false},{"letter":"B","content":"政府部门来电/来访。","answer":false},{"letter":"C","content":"监管机构","answer":false},{"letter":"D","content":"自媒体","answer":true}],"answer":"D"},{"type":"choice","question":"23、云服务疑似危机场景：涉及云服务扣款/账号/功能使用争议导致的场景不包括下列哪个场景( )","options":[{"letter":"A","content":"多次服务投诉","answer":false},{"letter":"B","content":"政府职能机构投诉转办","answer":false},{"letter":"C","content":"投诉315","answer":true},{"letter":"D","content":"媒体曝光","answer":false}],"answer":"C"},{"type":"choice","question":"24、闭单的时间是多长？","options":[{"letter":"A","content":"不涉及回电等情况时，需在挂机后30min内闭单","answer":true},{"letter":"B","content":"挂机后1小时内","answer":false},{"letter":"C","content":"挂机后40分钟","answer":false}],"answer":"A"},{"type":"choice","question":"25、小朱接到用户的电话，未找到知识库，告知用户会回复电话，小朱联系用户未联系上，小朱执行的流程是哪一个呢？","options":[{"letter":"A","content":"断线","answer":false},{"letter":"B","content":"催单","answer":false},{"letter":"C","content":"353/233/463流程","answer":true},{"letter":"D","content":"升级","answer":false}],"answer":"C"},{"type":"choice","question":"26、用户进电咨询自己的智慧屏在视频通话时摄像头无法升起，请问应该选择的SR大小类是？","options":[{"letter":"A","content":"智慧屏\u003e华为应用\u003e畅连","answer":false},{"letter":"B","content":"智慧屏\u003e开关机与运行\u003e稳定与流畅","answer":false},{"letter":"C","content":"智慧屏\u003e外观与硬件\u003e摄像头","answer":true},{"letter":"D","content":"智慧屏\u003e华为应用\u003e智慧生活","answer":false}],"answer":"C"},{"type":"choice","question":"27、通过手机助手恢复数据准备不包含（）","options":[{"letter":"A","content":"您备份过手机数据的电脑。","answer":false},{"letter":"B","content":"手机原装数据线，并确保数据线连接稳定无松动","answer":false},{"letter":"C","content":"使用手机助手恢复数据时，电脑会自动调用手机上的备份APP，请勿在手机上打开备份APP","answer":false},{"letter":"D","content":"稳定的网络","answer":true}],"answer":"D"},{"type":"choice","question":"22、以下说法不正确的是","options":[{"letter":"A","content":"云备份只能在连接WLAN网络下操作","answer":false},{"letter":"B","content":"云备份数据删除后无法恢复找回，删除时不会影响本地数据","answer":false},{"letter":"C","content":"云备份数据可以在云空间进行查看具体备份内容","answer":true},{"letter":"D","content":"云备份数据恢复是增量恢复，不会覆盖影响本地原有数据","answer":false}],"answer":"C"},{"type":"choice","question":"24、以下哪个选项不属于远程诊断分析结果？","options":[{"letter":"A","content":"预警","answer":false},{"letter":"B","content":"正常","answer":false},{"letter":"C","content":"故障","answer":false},{"letter":"D","content":"异常","answer":true}],"answer":"D"},{"type":"choice","question":"29、以下哪个不是华为三脚架自拍杆 Pro的卖点","options":[{"letter":"A","content":"四键遥控 便捷拍摄新体验","answer":false},{"letter":"B","content":"相机一步启动，动静自在掌控","answer":false},{"letter":"C","content":"一掌可握 轻巧便携","answer":false},{"letter":"D","content":"180° 自由旋转 视角更随心","answer":true}],"answer":"D"},{"type":"choice","question":"29、加密备份密码忘记了，怎么找回以下说法不正确的是","options":[{"letter":"A","content":"如果忘记了加密密码，备份的文件将无法使用","answer":false},{"letter":"B","content":"若您设置时选择跳过提示信息，并且恢复数据时遗忘了密码，那么备份文件将无法恢复","answer":false},{"letter":"C","content":"告知用户，升级L2处理","answer":true},{"letter":"D","content":"如果您之前设置过密码提示，在您恢复备份文件的时候，可尝试根据提示记起密码。","answer":false}],"answer":"C"},{"type":"choice","question":"29、来电电话涉及辱骂，处理方案错误的是","options":[{"letter":"A","content":"若用户接通后依然无法准确定位问题且继续辱骂并达到次数，以不文明用语挂机后可记录案例闭单。","answer":false},{"letter":"B","content":"挂机24H内（间隔时间≥4小时）联络用户，若回拨未接通1次发送短信后，选择“不文明用语”闭单。","answer":false},{"letter":"C","content":"依据用户辱骂的程度可判定是否需要回拨电话，酌情处理","answer":true},{"letter":"D","content":"用户辱骂过程中涉及业务问题，但无法准确定位问题，挂机后需更换时间再联络用户，确认用户的问题。","answer":false}],"answer":"C"},{"type":"choice","question":"30、NM存储卡升级队列是？","options":[{"letter":"A","content":"华为-技术支持-第三方","answer":false},{"letter":"B","content":"华为-技术支持-耳机配件","answer":true},{"letter":"C","content":"华为-技术支持-功耗硬件","answer":false}],"answer":"B"},{"type":"choice","question":"14、在转接电话时，绝对不能点击的按钮是","options":[{"letter":"A","content":"咨询","answer":false},{"letter":"B","content":"挂机","answer":true},{"letter":"C","content":"转移","answer":false}],"answer":"B"},{"type":"choice","question":"12、以下哪个选项不是具有排他性质的门店？","options":[{"letter":"A","content":"ASC-M","answer":true},{"letter":"B","content":"MSC","answer":false},{"letter":"C","content":"SSC","answer":false},{"letter":"D","content":"ASC-E","answer":false}],"answer":"A"},{"type":"choice","question":"13、关于费用更省心活动描述不正确的是？","options":[{"letter":"A","content":"活动期间，到店 保外 维修可以减免人工费。","answer":false},{"letter":"B","content":"电池焕新 活动期间，无法 参与服务日减免人工费活动","answer":false},{"letter":"C","content":"一个活动期限内每台设备仅限参与一次","answer":false},{"letter":"D","content":"每年每台设备仅限参与一次","answer":true}],"answer":"D"},{"type":"choice","question":"31、如何通过“以形践言”的方式让用户感受到我们的服务意识？","options":[{"letter":"A","content":"体贴服务，温柔否定","answer":false},{"letter":"B","content":"专业服务，通俗表达","answer":true},{"letter":"C","content":"主动服务，换位思考","answer":true},{"letter":"D","content":"闭环服务，拒绝机械","answer":true}],"answer":"BCD"},{"type":"choice","question":"35、在IPCC右侧，可视化的个人今日情况包含","options":[{"letter":"A","content":"示忙次数","answer":true},{"letter":"B","content":"今日接起电话量","answer":true},{"letter":"C","content":"示忙时长","answer":true},{"letter":"D","content":"今日呼出电话量","answer":true},{"letter":"E","content":"平均通话时长","answer":true},{"letter":"F","content":"今日电话量","answer":true}],"answer":"ABCDEF"},{"type":"choice","question":"32、用户来电询问高级工程师回复的时效","options":[{"letter":"A","content":"您这边保持电话畅通就可以的","answer":false},{"letter":"B","content":"我们的高级工程师/高级客户经理预计最快2小时，最晚24小时联系您，请您耐心等待。","answer":true},{"letter":"C","content":"我们的高级工程师/高级客户经理预计最快明日10:00，最晚明日18:00前联系您，请您耐心等待。","answer":true}],"answer":"BC"},{"type":"choice","question":"38、用户终端设备与远程服务成功建立连接后，以下哪些信息可获取和查看？","options":[{"letter":"A","content":"电量","answer":true},{"letter":"B","content":"WiFi信号强度","answer":true},{"letter":"C","content":"设备型号","answer":true},{"letter":"D","content":"系统版本","answer":true}],"answer":"ABCD"},{"type":"choice","question":"41、以下支持上门服务的选项有哪些？","options":[{"letter":"A","content":"政企用户使用的PC","answer":true},{"letter":"B","content":"M\u0026P系列手机","answer":true},{"letter":"C","content":"智慧屏及其相关产品","answer":true},{"letter":"D","content":"华为路由器H6","answer":true}],"answer":"ABCD"},{"type":"choice","question":"31、以下能联系到华为人工客服的方式有哪些？","options":[{"letter":"A","content":"4.0038038E9","answer":false},{"letter":"B","content":"950801","answer":true},{"letter":"C","content":"950805","answer":true},{"letter":"D","content":"950800","answer":true}],"answer":"BCD"},{"type":"choice","question":"42、疑似危机场景包含：","options":[{"letter":"A","content":"媒体曝光","answer":true},{"letter":"B","content":"政府职能机构投诉转办","answer":true},{"letter":"C","content":"虚假宣传","answer":true},{"letter":"D","content":"多次服务投诉","answer":true}],"answer":"ABCD"},{"type":"choice","question":"45、在（ ）场景需要备份数据。","options":[{"letter":"A","content":"更换手机","answer":true},{"letter":"B","content":"升级系统","answer":true},{"letter":"C","content":"送修/寄修","answer":true},{"letter":"D","content":"恢复出厂设置","answer":true}],"answer":"ABCD"},{"type":"choice","question":"47、用户反馈手机升级系统版本后出现发烫、续航变差问题，坐席通过远程工具进行检测时应选择以下哪些检测选项？","options":[{"letter":"A","content":"功耗","answer":true},{"letter":"B","content":"电池","answer":true},{"letter":"C","content":"热","answer":true},{"letter":"D","content":"充电异常","answer":false}],"answer":"ABC"},{"type":"choice","question":"48、无线车充不充电，指示灯不亮，应如何排查？","options":[{"letter":"A","content":"确认无线车充是否使用了标配车充电源线或者Type-C口充电线，是否无损伤、工作正常。","answer":true},{"letter":"B","content":"确认标配车充电源线或者Type-C口充电线是否插紧。","answer":true},{"letter":"C","content":"确认车内点烟器口是否正常供电，使用其他车载充电器进行排查确认。","answer":true}],"answer":"ABC"},{"type":"choice","question":"32、在官网中用户可以享受哪些售后服务？","options":[{"letter":"A","content":"服务中心查询","answer":true},{"letter":"B","content":"预约门店","answer":true},{"letter":"C","content":"服务进度查询","answer":true},{"letter":"D","content":"上门服务","answer":true},{"letter":"E","content":"保修期及权益服务查询","answer":true},{"letter":"F","content":"寄修","answer":true},{"letter":"G","content":"备件价格查询","answer":true}],"answer":"ABCDEFG"},{"type":"choice","question":"34、常见的投诉类型有","options":[{"letter":"A","content":"售后投诉","answer":true},{"letter":"B","content":"产品投诉","answer":true},{"letter":"C","content":"人员投诉","answer":true}],"answer":"ABC"},{"type":"choice","question":"39、连接远程服务过程中，用户点击哪些应用，弹窗会提示用户是否授权共享给客服坐席？","options":[{"letter":"A","content":"淘宝","answer":true},{"letter":"B","content":"微信","answer":true},{"letter":"C","content":"支付宝","answer":false},{"letter":"D","content":"华为钱包","answer":false}],"answer":"AB"},{"type":"choice","question":"31、在接听用户的电话，我们可以怎么做？","options":[{"letter":"A","content":"真诚、柔和、自信、热情，但非嗲声嗲气；无不耐烦、冷淡、强硬现象。","answer":true},{"letter":"B","content":"说话的方式比说话的内容更具有影响力，怎么说比说什么更重要。","answer":true},{"letter":"C","content":"专心倾听用户的语义","answer":true},{"letter":"D","content":"口齿清晰，无不良口语表达习惯，如拖尾音、口头禅、刻意修饰语音等","answer":true}],"answer":"ABCD"},{"type":"choice","question":"36、知识库可按照哪几种方式进行排序？","options":[{"letter":"A","content":"相关度","answer":true},{"letter":"B","content":"浏览量","answer":true},{"letter":"C","content":"评分","answer":true},{"letter":"D","content":"区域","answer":false},{"letter":"E","content":"时间","answer":true}],"answer":"ABCE"},{"type":"choice","question":"35、【服务倍贴心】活动中用户享受免费手机贴膜、清洁保养等服务，下列说法中正确的是：","options":[{"letter":"A","content":"支持预约到店/直接到店，不支持寄修","answer":true},{"letter":"B","content":"活动周期内，每个产品仅限参与1次","answer":true},{"letter":"C","content":"该活动无设备购买时长限制","answer":true},{"letter":"D","content":"活动期间免费贴的膜无保修，若损坏不支持免费更换","answer":true}],"answer":"ABCD"},{"type":"choice","question":"36、连接远程服务过程中，用户点击哪些应用，弹窗会提示用户是否授权共享给客服坐席？","options":[{"letter":"A","content":"淘宝","answer":true},{"letter":"B","content":"华为钱包","answer":false},{"letter":"C","content":"支付宝","answer":false},{"letter":"D","content":"微信","answer":true}],"answer":"AD"},{"type":"choice","question":"32、以下哪些 内容是我们不可以发送给用户的信息：","options":[{"letter":"A","content":"对于内部公开的内容直接复制文字发送","answer":true},{"letter":"B","content":"对于除知识正文的其他知识库详情页面信息直接发给用户","answer":true},{"letter":"C","content":"对于外部公开的内容在官网中找到后发给用户","answer":false}],"answer":"AB"},{"type":"choice","question":"33、简瑶购买了mate 30，她可以在官网中“服务支持”中查询到哪些内容？","options":[{"letter":"A","content":"设备常用问题的展现，直接点击进入查看解决方案","answer":true},{"letter":"B","content":"维修服务、服务店查询、备件价格查询 、保修政策、保修期及权益查询等，根据产品的不同服务略有不同","answer":true},{"letter":"C","content":"工具与资源的相关下载，在其中可以查询具体产品的相关信息","answer":true}],"answer":"ABC"},{"type":"choice","question":"39、多次服务投诉，涉及到的场景有：","options":[{"letter":"A","content":"普通微博用户，发布服务投诉类微博未解决时，发帖大于3次或某一次转发+评论次数超30可直接升级。","answer":true},{"letter":"B","content":"用户在心声社区发帖，回复超过30可直接升级疑似危机。","answer":true},{"letter":"C","content":"用户在重点看护微博下评论超过3条，投诉未解决可直接升级。","answer":true},{"letter":"D","content":"微博粉丝数超过10W用户，发布服务投诉类微博可直接升级。","answer":true}],"answer":"ABCD"},{"type":"choice","question":"40、可以升级的场景有哪些？","options":[{"letter":"A","content":"表扬与建议问题正常处理，若用户坚持找高级别领导可直接升级对应领域","answer":true},{"letter":"B","content":"用户来电投诉或遇到到危机类问题","answer":true},{"letter":"C","content":"用户明确要求在线升级处理","answer":true},{"letter":"D","content":"知识库无对应知识或解决方案","answer":true},{"letter":"E","content":"L1与用户无法达成一致，且现场支撑也无法解决","answer":true},{"letter":"F","content":"L1按照知识库和华为方正式通知的方案处理，仍无法解决用户问题","answer":true}],"answer":"ABCDEF"},{"type":"choice","question":"43、非故障机来电场景，引导用户通过访问以下哪个应用可以建立诊断分析连接？","options":[{"letter":"A","content":"服务App","answer":true},{"letter":"B","content":"手机管家","answer":false},{"letter":"C","content":"华为手机助手","answer":false},{"letter":"D","content":"我的华为App","answer":true}],"answer":"AD"},{"type":"choice","question":"46、L1坐席小陈给用户提供的方案存在错误，避免给用户造成损失回电澄清与纠正。回电流程及工单操作正确的是？","options":[{"letter":"A","content":"当工单已关闭情况下无需新建工单回电并备注关联工单号。","answer":false},{"letter":"B","content":"当工单已关闭情况下需新建工单回电并备注关联工单号。","answer":true},{"letter":"C","content":"当日创建的工单当日必须回电。","answer":true},{"letter":"D","content":"若回电未接通，按照233-463流程跟进。","answer":true},{"letter":"E","content":"若当日未回电，按照“建议外呼场景”回电并备注关联工单号。","answer":true}],"answer":"BCDE"},{"type":"choice","question":"34、服务工单关单原因有哪几种？","options":[{"letter":"A","content":"非业务咨询","answer":true},{"letter":"B","content":"未联系到用户","answer":true},{"letter":"C","content":"正常关单","answer":true},{"letter":"D","content":"无声电话","answer":true},{"letter":"E","content":"不文明用语","answer":true}],"answer":"ABCDE"},{"type":"choice","question":"47、外呼场景中以下要求外呼的场景有哪些","options":[{"letter":"A","content":"手表消息不提醒、路由器偶发性断网、PC间接性自动关机、智慧屏偶尔花屏等场景。","answer":true},{"letter":"B","content":"给用户提供的方案存在错误，避免给用户造成损失回电澄清与纠正","answer":true},{"letter":"C","content":"已给用户提供完整的排查方案，通话中不能确定用户问题是否解决","answer":true}],"answer":"ABC"},{"type":"choice","question":"48、以下那些属于要求外呼场景？","options":[{"letter":"A","content":"系统原因","answer":true},{"letter":"B","content":"用户要求","answer":true},{"letter":"C","content":"提升用户体验","answer":false},{"letter":"D","content":"业务要求","answer":true}],"answer":"ABD"},{"type":"choice","question":"49、以下哪些产品的保修时间为1年","options":[{"letter":"A","content":"Inbox有线耳机","answer":false},{"letter":"B","content":"全景相机","answer":true},{"letter":"C","content":"照片打印机","answer":true},{"letter":"D","content":"随笔记本销售的电源适配器","answer":false}],"answer":"BC"},{"type":"choice","question":"35、通过提供以下哪些信息可查询到设备的维修/检测记录？","options":[{"letter":"A","content":"SN号","answer":true},{"letter":"B","content":"以上都对","answer":false},{"letter":"C","content":"检测单号","answer":true},{"letter":"D","content":"IMEI号","answer":false}],"answer":"AC"},{"type":"choice","question":"36、知识密级包含？","options":[{"letter":"A","content":"机密","answer":false},{"letter":"B","content":"内部公开","answer":true},{"letter":"C","content":"秘密","answer":true},{"letter":"D","content":"外部公开","answer":true}],"answer":"BCD"},{"type":"choice","question":"35、知识推荐区包含以下哪几个模块？","options":[{"letter":"A","content":"最新知识","answer":true},{"letter":"B","content":"知识合集","answer":true},{"letter":"C","content":"最热知识","answer":true},{"letter":"D","content":"友情链接","answer":false}],"answer":"ABC"},{"type":"choice","question":"37、下列情况中，不能进行在线转接，按照知识库未解决需收集信息升级工单的情况是","options":[{"letter":"A","content":"未成年充值退费","answer":true},{"letter":"B","content":"游戏中心游戏充值未到账","answer":true},{"letter":"C","content":"音乐、主题、阅读等扣费要求退费","answer":true},{"letter":"D","content":"视频用户开通会员要求退费","answer":true}],"answer":"ABCD"},{"type":"choice","question":"31、用户想要去服务门店，坐席正确的行为有以下哪几个？","options":[{"letter":"A","content":"询问用户是否需要帮助其进行后面7天的预约，对于当天去的用户告诉用户可以提前电话联系服务门店","answer":true},{"letter":"B","content":"还在保修期内容的产品维修建议用户携带购机发票","answer":true},{"letter":"C","content":"提醒用户备份数据","answer":true},{"letter":"D","content":"帮助用户查询距离比较近的门店并把信息短信发送用户","answer":true},{"letter":"E","content":"在电话优先帮助用户先进行排查","answer":true}],"answer":"ABCDE"},{"type":"choice","question":"32、坐席打开用户的历史服务工单列表，展开一个SR单并移动鼠标到服务工单上，弹出浮层显示工单的哪些信息","options":[{"letter":"A","content":"诉求类型","answer":true},{"letter":"B","content":"产品信息","answer":true},{"letter":"C","content":"服务工单单号","answer":true},{"letter":"D","content":"业务领域","answer":true},{"letter":"E","content":"业务类型","answer":true},{"letter":"F","content":"状态","answer":true},{"letter":"G","content":"诉求描述","answer":true}],"answer":"ABCDEFG"},{"type":"choice","question":"37、投诉处理的步骤有","options":[{"letter":"A","content":"核实原因","answer":true},{"letter":"B","content":"处理解决","answer":true},{"letter":"C","content":"跟进闭环","answer":true},{"letter":"D","content":"了解需求","answer":true},{"letter":"E","content":"预处理","answer":true},{"letter":"F","content":"安抚顾客","answer":true}],"answer":"ABCDEF"},{"type":"choice","question":"40、以下属于售后服务中心的是（）","options":[{"letter":"A","content":"ASC-E","answer":true},{"letter":"B","content":"MSC","answer":true},{"letter":"C","content":"ASC-M","answer":true}],"answer":"ABC"},{"type":"choice","question":"41、异常关单的场景有哪些？","options":[{"letter":"A","content":"无声电话","answer":true},{"letter":"B","content":"不文明用语","answer":true},{"letter":"C","content":"未联系到用户","answer":true},{"letter":"D","content":"非业务场景","answer":true},{"letter":"E","content":"升级","answer":false}],"answer":"ABCD"},{"type":"choice","question":"38、以下关于服务日描述正确的是？","options":[{"letter":"A","content":"每台设备在活动期内仅限参与一次保养","answer":true},{"letter":"B","content":"寄修可以参与","answer":false},{"letter":"C","content":"经销商送修不可以参与","answer":true},{"letter":"D","content":"中国港澳台地区机型可参与服务日活动","answer":true}],"answer":"ACD"},{"type":"choice","question":"44、云空间同步可以支持的数据包含：","options":[{"letter":"A","content":"日历","answer":true},{"letter":"B","content":"天气","answer":false},{"letter":"C","content":"联系人","answer":true},{"letter":"D","content":"相机视频","answer":true}],"answer":"ACD"},{"type":"choice","question":"45、用户反馈来电故障机已经收到了诊断分析短信但手机并没有弹出服务条款，请问如何处理？","options":[{"letter":"A","content":"引导用户排查手机当前是否出现无法连接网络情况","answer":true},{"letter":"B","content":"引导用户排查手机当前系统时间是否不正确","answer":true},{"letter":"C","content":"直接告知用户连接代码，并在“诊断分析”界面中手动输入","answer":false},{"letter":"D","content":"引导用户将“信息”应用升级至9.1.6.366及以上","answer":true}],"answer":"ABD"},{"type":"choice","question":"34、远程服务坐席界面支持如下哪些功能？","options":[{"letter":"A","content":"涂鸦","answer":true},{"letter":"B","content":"提示","answer":true},{"letter":"C","content":"控制","answer":false},{"letter":"D","content":"共享","answer":true}],"answer":"ABD"},{"type":"choice","question":"36、产品自燃/爆炸/漏电是指：因我司生产销售的产品出现的电池鼓包，并引发漏电、自燃、爆炸等导致用户财产损失、消费者索赔等，主要场景包含：","options":[{"letter":"A","content":"终端产品接口（尾插/充电接口/充电线）烧焦烧毁，无人员伤亡。","answer":true},{"letter":"B","content":"终端产品电源适配器自燃/爆炸，导致用户财物损失。","answer":true},{"letter":"C","content":"终端产品（主机/电源适配器）电池鼓包引发漏电/自燃/爆炸，导致用户财物损失。","answer":true}],"answer":"ABC"},{"type":"choice","question":"37、侵权盗用包含的场景有：","options":[{"letter":"A","content":"我司剽窃他人作品。","answer":true},{"letter":"B","content":"我司未经合作作者许可，将与他人合作创作的作品当作自己单独创作的作品发表。","answer":true},{"letter":"C","content":"我司未经著作权人许可，发表其作品。","answer":true},{"letter":"D","content":"我司歪曲、篡改他人作品。","answer":true}],"answer":"ABCD"},{"type":"choice","question":"38、关于无声电话的处理方式有哪些？","options":[{"letter":"A","content":"用户进线已经获取清楚了用户信息之后无声、杂音、断线，需要建单，并回电跟进","answer":true},{"letter":"B","content":"不管什么情况都必须建单","answer":false},{"letter":"C","content":"刚接通，用户随即挂断情况下不建单，IPCC发送无声短信","answer":true}],"answer":"AC"},{"type":"choice","question":"43、关于手机克隆，以下说法正确的是( )","options":[{"letter":"A","content":"iPhone手机之间互相克隆，支持联系人、图片、视频、日历等数据的克隆","answer":true},{"letter":"B","content":"新手机和旧手机上都需要下载手机克隆APP","answer":true},{"letter":"C","content":"从其他品牌Android手机克隆至华为品牌手机，仅支持应用程序的克隆，不支持关联数据的克隆，手机内预置的应用不支持克隆。","answer":true},{"letter":"D","content":"从华为品牌手机之间互相克隆，可对应用程序及其关联数据进行克隆","answer":true}],"answer":"ABCD"},{"type":"choice","question":"39、小张在接线中听不懂用户说的方言，小张可以怎么处理？","options":[{"letter":"A","content":"抱歉，因为对您当地方言不太了解，为了更好地帮助您，我这边帮您查询一下您当地的服务中心来协助您进行处理，您看可以吗？(并短信发送此话术与服务店查询方式）若仍无法辨别，通话/会话中告知用户，发送具体查询服务店的方式，礼貌挂机/结束会话即可。","answer":true},{"letter":"B","content":"您好，您看您是否方便让您身边的家人或朋友使用普通话协助您进行描述呢？","answer":true},{"letter":"C","content":"您好，我们这边是全国客服中心，可能对您当地方言不太了解，辛苦您这边使用普通话重新帮我描述下问题，可以吗？","answer":true}],"answer":"ABC"},{"type":"choice","question":"45、当“要求外呼场景”完成后，为提升用户体验进行的外呼。回电前需要确认哪些？","options":[{"letter":"A","content":"向当日值班组长申请回电同意","answer":false},{"letter":"B","content":"业务不处于繁忙状态","answer":true},{"letter":"C","content":"涉及疑似危机场景，外呼后正常闭单","answer":false},{"letter":"D","content":"向中控报备回电申请获得同意","answer":true}],"answer":"BD"},{"type":"choice","question":"46、以下哪些检测选项可以检测到用户设备是否存在数据丢失问题？","options":[{"letter":"A","content":"图库","answer":true},{"letter":"B","content":"日历","answer":false},{"letter":"C","content":"电话","answer":false},{"letter":"D","content":"短信","answer":false},{"letter":"E","content":"备忘录","answer":true},{"letter":"F","content":"联系人","answer":true}],"answer":"AEF"},{"type":"choice","question":"47、用户来电反馈手机卡顿，带领用户排查后建议用户尝试，承诺回电跟进。以下说法正确的是","options":[{"letter":"A","content":"若有约定回电时间须按时完成回电","answer":true},{"letter":"B","content":"未接通按照2天3call 3短信流程跟进","answer":true},{"letter":"C","content":"未约定回电时间须24H内回电","answer":true}],"answer":"ABC"},{"type":"choice","question":"50、M-Pencil第二代适用的产品有哪些？","options":[{"letter":"A","content":"MatePad 11;MatePad Pro系列","answer":true},{"letter":"B","content":"Mate Book E（2022）;MatePad 10.4（2022款）","answer":true},{"letter":"C","content":"Mate X2；P50系列","answer":false},{"letter":"D","content":"Mate 40系列；MatePadPaper","answer":true}],"answer":"ABD"},{"type":"choice","question":"39、以下属于华为授权服务中心的是？","options":[{"letter":"A","content":"ASC-E","answer":true},{"letter":"B","content":"SSC","answer":true},{"letter":"C","content":"FSC","answer":false},{"letter":"D","content":"ASC-I","answer":true},{"letter":"E","content":"MSC","answer":true},{"letter":"F","content":"ASC-M","answer":true}],"answer":"ABDEF"},{"type":"choice","question":"34、以下知识库内容中，不可以进行截图传播的是","options":[{"letter":"A","content":"知识库主页","answer":true},{"letter":"B","content":"搜索结果页","answer":true},{"letter":"C","content":"知识详情页","answer":true},{"letter":"D","content":"产品百科信息","answer":true},{"letter":"E","content":"个人中心","answer":true}],"answer":"ABCDE"},{"type":"choice","question":"35、投诉处理的原则有","options":[{"letter":"A","content":"同理","answer":true},{"letter":"B","content":"尊重","answer":true},{"letter":"C","content":"积极","answer":true},{"letter":"D","content":"责任","answer":true}],"answer":"ABCD"},{"type":"choice","question":"40、远程服务支持手机系统版本为？","options":[{"letter":"A","content":"Emui8.0","answer":true},{"letter":"B","content":"Emui9.0","answer":true},{"letter":"C","content":"Emui10.0","answer":true},{"letter":"D","content":"Emui5.0","answer":false}],"answer":"ABC"},{"type":"choice","question":"41、客服坐席可以通过如下哪些账号登入远程服务页面？","options":[{"letter":"A","content":"Uniportal 账号","answer":true},{"letter":"B","content":"QQ账号","answer":false},{"letter":"C","content":"W3账号","answer":true},{"letter":"D","content":"华为账号","answer":false}],"answer":"AC"},{"type":"choice","question":"42、以下哪个场景会造成延长服务宝出保（）","options":[{"letter":"A","content":"小A不小心将设备从3楼阳台掉落","answer":true},{"letter":"B","content":"小A的手机麦克风坏了","answer":false},{"letter":"C","content":"小A将自己的设备拿去朋友店的手机维修店换了电池","answer":true},{"letter":"D","content":"小A的手机IMEI/MEID/SN缺失","answer":true}],"answer":"ACD"},{"type":"choice","question":"43、关于查询华为碎屏服务宝服务权益，以下说法正确的是（）","options":[{"letter":"A","content":"华为会员服务APP 8.0或以上版本在“我的”-“设备权益”中查看。（会员服务是8.0以下版本，请在“保修状态”查询）","answer":true},{"letter":"B","content":"一般购买成功后会在24小时内生效，如查询不到权益，请拨打华为客户服务热线(950800)为您进一步核实。","answer":true},{"letter":"C","content":"华为终端官网中“服务与支持”-“获取维修相关服务”-“保修期及保障服务查询”查询您的服务权益","answer":true}],"answer":"ABC"},{"type":"choice","question":"44、以下哪些产品不在延长服务宝保修范围内（）","options":[{"letter":"A","content":"耳机","answer":true},{"letter":"B","content":"可拆卸电池","answer":true},{"letter":"C","content":"电源适配器","answer":true},{"letter":"D","content":"内置电池","answer":false}],"answer":"ABC"},{"type":"choice","question":"45、以下哪些属于电源与功耗的业务范围描述？","options":[{"letter":"A","content":"关于各个应用的电池使用情况、电池设置、省电模式、电源计划（平衡、性能、高性能）等相关问题。","answer":true},{"letter":"B","content":"关于睡眠与休眠的相关问题。","answer":true},{"letter":"C","content":"关于耗电类相关问题。","answer":true}],"answer":"ABC"},{"type":"choice","question":"46、备份数据的方式有（ ）","options":[{"letter":"A","content":"华为云备份","answer":true},{"letter":"B","content":"手机克隆","answer":true},{"letter":"C","content":"备份至外部存储卡","answer":true},{"letter":"D","content":"使用手机助手备份","answer":true}],"answer":"ABCD"},{"type":"choice","question":"47、哪些方案属于尝试性方案，是否有定义？","options":[{"letter":"A","content":"提供完整方案后，先与用户确认问题是否解决，如用户明确好了/可以了/没问题了等问题已经解决，则不需要验证","answer":true},{"letter":"B","content":"根据当通用户反馈问题是否解决，判断是否为需要验证回电场景","answer":true},{"letter":"C","content":"尝试性方案具体每个场景质检无法定义","answer":true},{"letter":"D","content":"用户表示还不确定/得再观察一下，则需要回电","answer":true}],"answer":"ABCD"},{"type":"choice","question":"48、要求外呼场景包括哪些场景","options":[{"letter":"A","content":"可以听清用户问题，沟通中断线回拨","answer":true},{"letter":"B","content":"用户对于方案不满意勉强挂机","answer":false},{"letter":"C","content":"排查方案需挂机操作","answer":true},{"letter":"D","content":"用户辱骂涉及业务问题","answer":true},{"letter":"E","content":"解答错误自纠","answer":true},{"letter":"F","content":"用户要求回电跟进","answer":true},{"letter":"G","content":"故障解决需回电验证","answer":true}],"answer":"ACDEFG"},{"type":"choice","question":"49、小明反馈充电器无法给设备充电，需如何排查","options":[{"letter":"A","content":"重新插拔或者更换数据线和被充电设备，确认是否为数据线或被充电设备本身问题。","answer":true},{"letter":"B","content":"检查接头和接口是否有脏污，如果发现灰尘等脏物，建议用毛刷清理一下，再重新充电确认。","answer":true},{"letter":"C","content":"将充电器拔掉后重新插入插座或排插尝试是否可以充电。","answer":true},{"letter":"D","content":"将充电器在其它插座或者接线板排插上尝试是否可以充电，排除插座或排插的问题。","answer":true}],"answer":"ABCD"},{"type":"choice","question":"50、以下关于M-Pencil的描述正确的是","options":[{"letter":"A","content":"支持双击笔身，可切换笔刷和橡皮檫","answer":true},{"letter":"B","content":"充电1小时即可充满，可用10小时","answer":true},{"letter":"C","content":"M-Pencil支持磁吸配对，轻轻一贴就能充电","answer":true},{"letter":"D","content":"闪连快充，插入USB Type-C接口，就可以轻松连接并充电","answer":false}],"answer":"ABC"},{"type":"judge","question":"51、“主动服务，换位思考”是指不推卸责任，认真聆听用户的描述，主动手机信息，为用户提供省钱省时省事的方案","answer":"正确"},{"type":"judge","question":"52、林安在官网中只能通过手动搜索查找内容","answer":"错误"},{"type":"judge","question":"53、林安买了matebook X，她自己想要查询保修期，她可以在官网中的保修期及权益查询中查询到","answer":"正确"},{"type":"judge","question":"54、林安来电话时，语气轻快，语无法在官网中查询到自己寄修的产品的信息，坐席告知用户可以寄修服务我的服务记录中查询。正确55、用户来电时，查看用户历史服务工单，未关闭的单据不会优先置顶","answer":"错误"},{"type":"judge","question":"56、进入工单视图界面，左侧点击服务工单，进入我的待办页签，搜索框输入用户邮箱、电话号码、姓名，就可以搜索到对应的服务工单","answer":"正确"},{"type":"judge","question":"57、知识库问题搜索时，用句子进行搜索，结果更准确","answer":"错误"},{"type":"judge","question":"58、知识库没有任何问题与错误，若发现问题无法纠错","answer":"错误"},{"type":"judge","question":"59、服务门店加价、捆绑问题请升级售后投诉队列","answer":"正确"},{"type":"judge","question":"60、华为综合服务中心是华为自营的，具备完整服务及体验功能、为消费者提供舒适、快捷、温暖服务体验的大型服务专营店","answer":"错误"},{"type":"judge","question":"61、【配件更随心】活动用户仅限活动期限内享受1次","answer":"错误"},{"type":"judge","question":"62、坐席只能通过一站式工作台进行短信发送，不能通过IPCC进行短信发送","answer":"错误"},{"type":"judge","question":"63、IPCC中，在点击签入之后，会自动跳转为整理时长","answer":"正确"},{"type":"judge","question":"64、远程服务坐席端界面可查看用户设备版本","answer":"正确"},{"type":"judge","question":"65、目前华为所有的手机和平板类产品，都可以购买保障服务产品","answer":"错误"},{"type":"judge","question":"66、延长服务宝在三包法规定的标准保修服务期的基础上针对产品主机延长相应的保修服务时间，保修期内对于人为故障的维修，免收检测费、备件费及维修费","answer":"错误"},{"type":"judge","question":"67、用户的手机近期总是意外重启，想要去门店检测维修，坐席查询门店后建议用户前往门店做法不正确","answer":"正确"},{"type":"judge","question":"68、疑似危机场景人身伤害包含：消费者在服务门店、授权体验店等经营场所内磕伤","answer":"正确"},{"type":"judge","question":"69、疑似危机处理时效：不主动承诺，要求知晓可告知：工作时间内8:30-18:00，非工作时间:预计最快明日10:00、最晚18:00","answer":"正确"},{"type":"judge","question":"70、若用户表示资料丢失，要求赔偿损失、诉诸法律、政府职能机构维权，升级疑似危机至用户所在地代表处，代表处联系用户至门店检测。若符合多次服务投诉类场景，可升级至地区部疑似危机处理专员队列协助处理","answer":"正确"},{"type":"judge","question":"71、小王在解决用户的问题中突然电话挂断了，他马上回拨过去了，电话未接通；过了15分钟后再次联系用户，未接通，他最后未联系到用户关单","answer":"正确"},{"type":"judge","question":"72、将Iphone上的数据通过手机克隆备份到华为手机上，可以备份包括：照片，视频，日历，通讯录及通话记录等","answer":"错误"},{"type":"judge","question":"73云备份只能在连接WLAN网络下操作，不可以连接热点操作","answer":"错误"},{"type":"judge","question":"74、在华为手机之间使用手机克隆时，旧手机的微信数据会覆盖当前手机的微信数据，请您在手机克隆前，将当前手机的微信数据进行备份","answer":"正确"},{"type":"judge","question":"75、远程诊断工具提供的“多媒体及屏幕”检测板块中可以远程监测用户手机屏幕碎裂故障属于内屏碎裂还是外屏碎裂","answer":"错误"},{"type":"judge","question":"76、坐席可以在远程诊断工具“历史结果查询”界面中输入SR单号、设备SN查询设备历史检测记录","answer":"正确"},{"type":"judge","question":"77、远程诊断工具检测到用户设备存在设备存在异常发热问题，坐席可以将检测结果及改善建议通过短信发送至用户手机号","answer":"错误"},{"type":"judge","question":"78、涉及线下操作还原网络设置，坐席小A未承诺回电。后续小A主动回访确认用户问题是否得到解决，小A回电流程规范","answer":"正确"},{"type":"judge","question":"79、沟通中不确定是否解决用户问题，无需回电，与用户达成一致后续再次来电即可","answer":"错误"},{"type":"judge","question":"80、小明接到用户反馈随购买华为手机赠送的有线耳机问题，自行排查无法解决需要升级时，工单应升级至“华为-技术支持-耳机配件”队列","answer":"错误"},{"type":"judge","question":"51、华为的体验店和服务店是一样的，用户可以购买和维修产品。","answer":"错误"},{"type":"judge","question":"54、林安来电告知说自己的手机有广告，坐席查询知识库后告知林安，林安不接受，坐席说“你不接受我也没办法”","answer":"错误"},{"type":"judge","question":"55、简瑶来电想要了解mate30和mate30 pro的参数区别，坐席可通过服务工具-查询产品参数，告知用户详细参数和区别对比","answer":"正确"},{"type":"judge","question":"56、L1坐席接到用户来电，在处理过程中用户情绪不佳，表示要投诉。安抚无效坐席按照处理流程将工单升级至投诉组处理。","answer":"正确"},{"type":"judge","question":"58、服务工单选择疑似危机后，会显示“疑似危机分类”且为必选","answer":"正确"},{"type":"judge","question":"59、李先生想查询P50产品尺寸大小，小王直接搜索P50+尺寸，小王的搜索方式是否正确？","answer":"正确"},{"type":"judge","question":"60、知识库只能搜索对外型号，无法搜索对内型号，所以在问题排查中务必确认清楚用户对外型号才可以搜索对应产品信息","answer":"错误"},{"type":"judge","question":"61、为了感谢消费者对华为品牌的认可，继续传递华为品牌温度，树立华为服务体验标杆，开展华为服务日活动","answer":"正确"},{"type":"judge","question":"62、通过官网查询门店是否参与服务日活动（知识库目前暂不支持查询），门店名称下方标注“服务日”标识的均参与服务日活动","answer":"正确"},{"type":"judge","question":"63、IPCC中，在通话结束后，会自动跳转为整理时长","answer":"正确"},{"type":"judge","question":"64、在线转接时，若之前未保存工单，则无法点击转移按钮","answer":"错误"},{"type":"judge","question":"65、用户明确手机进水或用户明确手机已过保，坐席不需要提醒带发票","answer":"正确"},{"type":"judge","question":"66、寄修时，如选择自主寄件，提醒用户选择到付；如果已自付运费，无法退还；可以尝试选择价保，快递可能会被拒收","answer":"错误"},{"type":"judge","question":"68、小林手机问题来电，坐席无法解决，将工单保存后直接升级","answer":"错误"},{"type":"judge","question":"69、小李接到用户尽心询问问界车相关的问题，他告知用户提供了AITO的客服电话，告知用户可以联系AITO服务专线","answer":"正确"},{"type":"judge","question":"70使用本地备份方式备份数据后，即使恢复出厂设置数据也不会丢失","answer":"错误"},{"type":"judge","question":"72、通过远程诊断工具检测到设备相关故障问题后，坐席可以在线远程修复故障问题，但需要征求用户的许可","answer":"正确"},{"type":"judge","question":"73、坐席可以通过远程诊断工具对用户设备故障进行远程监测、修复和故障日志信息收集","answer":"正确"},{"type":"judge","question":"77、小明是穿戴技能坐席，接到用户反馈购买Matebook X Pro随电脑赠送充电器出现问题，应该转接给PC汇聚队列","answer":"正确"},{"type":"judge","question":"78、小明是穿戴技能坐席，接到用户反馈华为NM储存卡问题，应该转接给IOT汇聚队列","answer":"错误"},{"type":"judge","question":"79、小明是穿戴技能坐席，接到用户反馈华为NM储存卡问题，应该自行承接","answer":"正确"},{"type":"judge","question":"52、华为为了提升用户的售后体验，降低用户的维修成本，展开了各类维修活动供用户选择","answer":"正确"},{"type":"judge","question":"54在跟用户沟通中，多用您，不用你；多用征询语，不用命令语；礼貌应答的态度要发自内心，要有始有终","answer":"正确"},{"type":"judge","question":"55、在用户进线中，主动为客户服务，自觉性的服务客户","answer":"正确"},{"type":"judge","question":"60、服务话术的特征是幽默轻松、概念新颖，特点影射。","answer":"错误"},{"type":"judge","question":"61用户投诉服务店工作人员态度有问题需升级至人员投诉组","answer":"错误"},{"type":"judge","question":"64、远程服务坐席界面可查看远程服务期间的应用启动服务记录","answer":"正确"},{"type":"judge","question":"67、用户使用的mate40手机咨询是否可以上门服务，坐席告知用户mate40可以上门服务","answer":"正确"},{"type":"judge","question":"70若用户表示已投诉至315等，若用户无法提供具体机构，仍然要升级疑似危机","answer":"错误"},{"type":"judge","question":"75新工班期间可以用自己的手机号建单后选择公司公共闭单","answer":"错误"},{"type":"judge","question":"75、远程诊断工具只能够检测用户设备是否存在故障问题并进行修复，无法智能推荐设备使用技巧或功能设置建议","answer":"错误"},{"type":"judge","question":"77、简瑶进线询问华为mate50 pro 素皮版和非素皮版全新屏幕备件价格是否一样","answer":"错误"},{"type":"judge","question":"78、用户明确无需回电，但坐席提供最终方案后，用户有明确不满或抱怨情绪，坐席仍要回电","answer":"错误"},{"type":"judge","question":"54、简瑶的电脑坏了，她可以在官网中自己进行申请寄修进行维修。","answer":"正确"},{"type":"judge","question":"55、林安来电告知坐席自己无法在官网中查询到自己寄修的产品的信息，坐席告知用户可以寄修服务我的服务记录中查询","answer":"正确"},{"type":"judge","question":"56、简瑶来电反馈mate30手机屏幕摔碎了，想要知道维修价格，坐席可通过服务工具-备件查询告知用户","answer":"正确"},{"type":"judge","question":"59、知识库内容可以截图，截图内容没有任何水印标记","answer":"错误"},{"type":"judge","question":"60、融合产品（手表、手环等）开通的云服务业务，非云服务投诉队列处理","answer":"正确"},{"type":"judge","question":"65、在华为商城随新机购买，或者所有渠道购机用户通过华为商城手机客户端补购，以及华为客服中心单独补购的，如果产品发生7天退机的，可随产品一起退款。（ ）","answer":"正确"},{"type":"judge","question":"66、碎屏服务宝随新机购买碎屏服务宝无需验机，可直接在销售渠道随新机购买。","answer":"正确"},{"type":"judge","question":"70、设备过敏问题，不用排查，直接帮助用户升级疑似危机","answer":"错误"},{"type":"judge","question":"71、电池鼓包问题，若用户仅反馈故障要求解决故障，不涉及索要赔偿等，不用升级疑似危机处理。","answer":"正确"},{"type":"judge","question":"72、若需要升级的工单，L1遇到需要与门店核实未拨通或者回电用户未接听的无需再处理，直接升级","answer":"正确"},{"type":"judge","question":"74、云端同步备份数据可以选择单独备份联系人，图片等信息。","answer":"正确"},{"type":"judge","question":"77、用户辱骂过程中涉及业务问题，但无法准确定位问题，挂机后无需回电，按照辱骂场景不文明用语闭单即可。","answer":"错误"},{"type":"judge","question":"78、“建议类的外呼场景”在符合外呼条件的情况下，24H内回电，未接通时根据具体问题执行233。接通后根据实际情况判断是否再次外呼。","answer":"错误"},{"type":"judge","question":"79、按照回电重要等级，将外呼场景分为“要求回电场景”和“不建议回电场景”","answer":"错误"},{"type":"judge","question":"52、简瑶来电告知坐席自己的手机黑屏了无法使用，希望帮助查询服务门店，坐席帮助查询服务门店后告知挂机","answer":"错误"},{"type":"judge","question":"53、坐席接到用Mate RS 保时捷设计的用户，询问用户的产品型号后直接转接保时捷对接","answer":"错误"},{"type":"judge","question":"55、林安购买了P50，她在官网中下载了P50的详细功能指南","answer":"正确"},{"type":"judge","question":"56、林安想要查询自己之前的维修记录，她在官网中的维修进度查询中可以查询进6个月的维修记录","answer":"正确"},{"type":"judge","question":"58、知识库只可使用中文进行操作","answer":"错误"},{"type":"judge","question":"61、使用手机查询门店是否参与服务日活动不需将我的华为APP更新至最新版。","answer":"错误"},{"type":"judge","question":"64、海外及港澳台地区的产品可以在中国大陆的任何一个授权服务中心购买华为延长服务宝","answer":"错误"},{"type":"judge","question":"67、若用户使用产品被烧伤、烫伤的（涉及人身伤害，可以引导用户前往服务中心检测设备电池是否存在问题）。","answer":"错误"},{"type":"judge","question":"69、简瑶来电询问的问题，坐席未找到知识库，安抚2次进行了升级","answer":"正确"},{"type":"judge","question":"71、云备份可以备份所有第三方应用数据。","answer":"错误"},{"type":"judge","question":"75坐席在使用远程诊断工具时，必须经得用户授权后才可以开始操作","answer":"正确"},{"type":"judge","question":"76、与用户通话过程中突然断线，可以清楚的知道用户问题，但还没进行解答，L1坐席小李无需外呼用户，选择无声电话关单","answer":"错误"},{"type":"judge","question":"79、小明是手机技能坐席，接到用户反馈购买Matebook X Pro随电脑赠送充电器出现问题，应该自行承接。","answer":"错误"},{"type":"judge","question":"80、小明接到用户反馈的照片打印机无法使用的问题，排查后无法解决用户问题，应在线转接电话至“L2-耳机配件-中”队列，工单升级至“华为-技术支持-耳机配件”。","answer":"正确"},{"type":"judge","question":"51、简瑶自己正在使用华为的手表，她可以在产品支持中找到手表使用攻略","answer":"正确"},{"type":"judge","question":"60、为了更好的应对PC业务需求，华为针对 PC产品 明确了授权服务中心的维修级别授权\u0026维修级别定义","answer":"正确"},{"type":"judge","question":"66、简瑶的手机是荣耀70来电咨询使用问题，坐席查询后告知用户此产品是由荣耀公司负责提供售后服务。您可以联系荣耀客户服务热线95030进一步咨询","answer":"正确"},{"type":"judge","question":"77、在跟用户的沟通中给用户提供了错误方案，挂机后需要回电更正一下","answer":"正确"},{"type":"judge","question":"55简瑶来电询问坐席是否可以帮助她查询手机的真伪，坐席告知可以帮助用户用设备的SN查询到设备的保修期，手机的真伪建议用户可以进入工信网查询真伪","answer":"正确"},{"type":"judge","question":"56、简瑶来电想要了解P30手机的权益信息，坐席告知无法查询，建议用户在手机“我的手机”自行查询","answer":"错误"},{"type":"judge","question":"64、用户距离门店太远时，可以向用户推荐寄修，寄修双向免物流费","answer":"正确"}];
+
+/* ===== 应用状态 ===== */
+const WRONG_KEY = 'huawei_quiz_wrong_v1';
+const state = {
+  mode: 'random',
+  pool: [],
+  idx: 0,
+  correct: 0,
+  sheet: [],
+  submitted: false,
+  selected: [],
+  wrongRound: [],
+};
+let lastMode = 'random';
+
+/* ===== 工具 ===== */
+function getWrongIds() {
+  try { return JSON.parse(localStorage.getItem(WRONG_KEY)) || []; }
+  catch (e) { return []; }
+}
+function saveWrongIds(ids) { localStorage.setItem(WRONG_KEY, JSON.stringify(ids)); }
+function shuffle(a) {
+  const arr = a.slice();
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+function typeOf(q) {
+  if (q.type === 'judge') return '判断题';
+  return (q.answer || '').length > 1 ? '多选题' : '单选题';
+}
+function isChoice(q) { return q.type === 'choice'; }
+
+/* ===== 视图切换（hash 路由） ===== */
+function route() { return (location.hash.replace('#', '').split('?')[0]) || 'home'; }
+function goHome() { location.hash = 'home'; }
+function startQuiz(mode) {
+  lastMode = mode;
+  buildPool(mode);
+  state.idx = 0; state.correct = 0; state.submitted = false;
+  state.wrongRound = [];
+  state.sheet = new Array(state.pool.length).fill(null);
+  location.hash = 'quiz';
+}
+function buildPool(mode) {
+  const all = QUESTIONS;
+  if (mode === 'choice') state.pool = shuffle(all.filter(q => isChoice(q)));
+  else if (mode === 'judge') state.pool = shuffle(all.filter(q => q.type === 'judge'));
+  else if (mode === 'wrong') {
+    const ids = getWrongIds();
+    state.pool = shuffle(ids.map(i => all[i]).filter(Boolean));
+  }
+  else state.pool = shuffle(all);
+  if (mode === 'mini') state.pool = state.pool.slice(0, 20);
+}
+function retryWrong() { startQuiz('wrong'); }
+
+/* ===== 渲染 ===== */
+function render() {
+  const r = route();
+  document.querySelectorAll('.view').forEach(v => {
+    v.hidden = v.dataset.route !== r;
+  });
+  const topbar = document.getElementById('topbar');
+  topbar.classList.toggle('show-back', r !== 'home');
+  if (r === 'home') renderHome();
+  if (r === 'quiz') renderQuiz();
+  if (r === 'result') renderResult();
+}
+window.addEventListener('hashchange', render);
+
+function renderHome() {
+  const all = QUESTIONS;
+  document.getElementById('statSingle').textContent = all.filter(q => isChoice(q) && (q.answer || '').length === 1).length;
+  document.getElementById('statMulti').textContent = all.filter(q => isChoice(q) && (q.answer || '').length > 1).length;
+  document.getElementById('statJudge').textContent = all.filter(q => q.type === 'judge').length;
+  document.getElementById('badgeChoice').textContent = all.filter(isChoice).length + ' 题';
+  document.getElementById('badgeJudge').textContent = all.filter(q => q.type === 'judge').length + ' 题';
+  document.getElementById('badgeWrong').textContent = getWrongIds().length + ' 题';
+}
+
+const MODE_LABEL = { random: '随机练习', mini: '随机 20 题小测', choice: '选择题专项', judge: '判断题专项', wrong: '错题重练' };
+
+function renderQuiz() {
+  const q = state.pool[state.idx];
+  document.getElementById('quizModeLabel').textContent = MODE_LABEL[state.mode];
+  document.getElementById('quizPos').textContent = '第 ' + (state.idx + 1) + ' / ' + state.pool.length + ' 题';
+  document.getElementById('progressFill').style.width = (state.idx / state.pool.length * 100) + '%';
+  document.getElementById('quizScore').textContent = state.correct + ' 分';
+  document.getElementById('qType').textContent = typeOf(q);
+  document.getElementById('qNum').textContent = '第 ' + (state.idx + 1) + ' 题';
+  document.getElementById('qText').textContent = q.question;
+
+  const grid = document.getElementById('sheetGrid');
+  grid.innerHTML = '';
+  state.sheet.forEach((s, i) => {
+    const c = document.createElement('span');
+    c.className = 'sheet-cell' + (s === true ? ' ok' : s === false ? ' no' : '') + (i === state.idx ? ' cur' : '');
+    grid.appendChild(c);
+  });
+
+  const list = document.getElementById('optList');
+  list.innerHTML = '';
+  state.selected = [];
+  if (isChoice(q)) {
+    q.options.forEach(o => {
+      const b = document.createElement('button');
+      b.className = 'opt';
+      b.innerHTML = '<span class="opt-key">' + o.letter + '</span><span>' + escapeHtml(o.content) + '</span>';
+      b.dataset.letter = o.letter;
+      b.onclick = function () { selectOpt(b, o.letter); };
+      list.appendChild(b);
+    });
+  } else {
+    ['正确', '错误'].forEach(function (w, i) {
+      const b = document.createElement('button');
+      b.className = 'opt judge-opt';
+      b.innerHTML = '<span class="opt-key">' + (i + 1) + '</span><span>' + w + '</span>';
+      b.dataset.word = w;
+      b.onclick = function () { selectJudge(b, w); };
+      list.appendChild(b);
+    });
+  }
+
+  document.getElementById('submitBtn').textContent = '提交答案';
+  document.getElementById('submitBtn').disabled = true;
+  document.getElementById('feedback').className = 'feedback';
+  document.getElementById('feedback').innerHTML = '';
+}
+
+function selectOpt(btn, letter) {
+  const q = state.pool[state.idx];
+  if (state.submitted) return;
+  const multi = (q.answer || '').length > 1;
+  if (multi) {
+    btn.classList.toggle('selected');
+    const i = state.selected.indexOf(letter);
+    if (i >= 0) state.selected.splice(i, 1);
+    else state.selected.push(letter);
+  } else {
+    document.querySelectorAll('#optList .opt').forEach(function (b) { b.classList.remove('selected'); });
+    btn.classList.add('selected');
+    state.selected = [letter];
+  }
+  document.getElementById('submitBtn').disabled = state.selected.length === 0;
+}
+function selectJudge(btn, word) {
+  if (state.submitted) return;
+  document.querySelectorAll('#optList .opt').forEach(function (b) { b.classList.remove('selected'); });
+  btn.classList.add('selected');
+  state.selected = [word];
+  document.getElementById('submitBtn').disabled = false;
+}
+
+/* ===== 判分 ===== */
+function handleSubmit() {
+  const q = state.pool[state.idx];
+  if (!state.submitted) {
+    if (state.selected.length === 0) return;
+    const correct = isChoice(q) ? (q.answer || '') : q.answer;
+    const userAns = isChoice(q) ? state.selected.slice().sort().join('') : state.selected[0];
+    const ok = userAns === correct;
+
+    document.querySelectorAll('#optList .opt').forEach(function (b) {
+      b.onclick = null;
+      const isRight = isChoice(q) ? correct.indexOf(b.dataset.letter) >= 0 : b.dataset.word === q.answer;
+      const isPicked = isChoice(q) ? state.selected.indexOf(b.dataset.letter) >= 0 : b.dataset.word === state.selected[0];
+      b.classList.add(isRight ? 'right' : (isPicked ? 'wrong' : 'dim'));
+    });
+
+    state.sheet[state.idx] = ok;
+    if (ok) state.correct++;
+    else {
+      state.wrongRound.push(state.idx);
+      const ids = getWrongIds();
+      const gi = QUESTIONS.indexOf(q);
+      if (ids.indexOf(gi) < 0) { ids.push(gi); saveWrongIds(ids); }
+    }
+
+    const fb = document.getElementById('feedback');
+    fb.className = 'feedback show ' + (ok ? 'ok' : 'no');
+    const ansText = isChoice(q)
+      ? q.options.filter(function (o) { return correct.indexOf(o.letter) >= 0; })
+          .map(function (o) { return '<span class="opt-lead">' + o.letter + '.</span> ' + escapeHtml(o.content); }).join('<br>')
+      : q.answer;
+    fb.innerHTML = ok
+      ? '<span class="fb-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span><span>回答正确</span>'
+      : '<span class="fb-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></span><span>回答错误<br><span class="ans-line">正确答案：' + ansText + '</span></span>';
+
+    state.submitted = true;
+    const btn = document.getElementById('submitBtn');
+    btn.textContent = state.idx < state.pool.length - 1 ? '下一题' : '查看成绩';
+    btn.disabled = false;
+    return;
+  }
+  if (state.idx < state.pool.length - 1) {
+    state.idx++;
+    state.submitted = false;
+    renderQuiz();
+  } else {
+    location.hash = 'result';
+  }
+}
+
+/* ===== 结果页 ===== */
+function renderResult() {
+  const total = state.pool.length;
+  const pct = total ? Math.round(state.correct / total * 100) : 0;
+  const ring = document.getElementById('ring');
+  ring.style.setProperty('--pct', pct);
+  document.getElementById('pctNum').textContent = pct + '%';
+  document.getElementById('resultTitle').textContent = pct >= 90 ? '太棒了，掌握扎实' : pct >= 60 ? '不错，继续加油' : '再接再厉';
+  document.getElementById('resultSub').textContent = '答对 ' + state.correct + ' / ' + total + ' 题';
+
+  const wl = document.getElementById('wrongList');
+  wl.innerHTML = '';
+  if (state.wrongRound.length > 0) {
+    const h = document.createElement('h3');
+    h.textContent = '本轮错题';
+    wl.appendChild(h);
+    state.wrongRound.forEach(function (i) {
+      const q = state.pool[i];
+      const div = document.createElement('div');
+      div.className = 'wrong-item';
+      const ansText = isChoice(q)
+        ? q.options.filter(function (o) { return (q.answer || '').indexOf(o.letter) >= 0; })
+            .map(function (o) { return o.letter + '. ' + o.content; }).join('；')
+        : q.answer;
+      div.innerHTML = '<div class="wq">' + escapeHtml(q.question) + '</div><div class="wa">正确答案：' + escapeHtml(ansText) + '</div>';
+      wl.appendChild(div);
+    });
+  } else {
+    const d = document.createElement('div');
+    d.className = 'empty-tip';
+    d.textContent = '本轮全部答对，没有错题';
+    wl.appendChild(d);
+  }
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+/* 键盘支持：1-8 选择选项，回车提交 */
+document.addEventListener('keydown', function (e) {
+  if (route() !== 'quiz' || state.submitted) return;
+  const key = e.key;
+  if (/^[1-8]$/.test(key)) {
+    const btns = document.querySelectorAll('#optList .opt');
+    const i = parseInt(key, 10) - 1;
+    if (btns[i]) { btns[i].click(); e.preventDefault(); }
+  } else if (key === 'Enter') {
+    const btn = document.getElementById('submitBtn');
+    if (!btn.disabled) { btn.click(); e.preventDefault(); }
+  }
+});
+
+render();
+</script>
+</body>
+</html>
