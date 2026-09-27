@@ -312,11 +312,11 @@ const store = {
   log: JSON.parse(localStorage.getItem(LOG_KEY)||"[]"),
   save(){ localStorage.setItem(PROG_KEY, JSON.stringify(this.prog)); localStorage.setItem(LOG_KEY, JSON.stringify(this.log)); },
   record(qid, ok){
-    const before = this.okTotal();
+    const before = stat.okTotal();
     const p=this.prog[qid]||{ok:0,wrong:0,last:"",firstTs:Date.now()};
     if(ok) p.ok++; else p.wrong++;
     p.last = ok?"ok":"wrong"; this.prog[qid]=p;
-    if(ok){ const cur=this.okTotal(); if(stageIndex(cur)>stageIndex(before)){ pendingUpgrade=stageIndex(cur); upgradeTick++; } }
+    if(ok){ const cur=stat.okTotal(); if(stageIndex(cur)>stageIndex(before)){ pendingUpgrade=stageIndex(cur); upgradeTick++; } }
     this.log.push({ts:Date.now(), qid, ok});
     if(this.log.length>3000) this.log=this.log.slice(-3000);
     this.save();
@@ -544,7 +544,7 @@ function viewPick(mode){
   }
   const titles={order:"顺序练习",random:"随机练习"};
   const desc={order:"按题型顺序刷题，适合系统掌握",random:"题目随机排列，适合查漏补缺"};
-  const scopes=[["all","全部题型",QUESTIONS.length,"综合"],["single","单选",TYPE_COUNTS["单选"],"单"],["multi","多选",TYPE_COUNTS["多选"],"多"],["judge","判断",TYPE_COUNTS["判断"],"判"]];
+  const scopes=[["全部","全部题型",QUESTIONS.length,"综"],["单选","单选",TYPE_COUNTS["单选"],"单"],["多选","多选",TYPE_COUNTS["多选"],"多"],["判断","判断",TYPE_COUNTS["判断"],"判"]];
   return `
   <div class="topbar"><button class="icon-btn" onclick="history.back()">${IC.back}</button>
     <div class="tb-title">${IC.dino}${titles[mode]||"练习"}</div><div style="width:38px"></div></div>
@@ -553,7 +553,7 @@ function viewPick(mode){
     <div class="scope-list">
       ${scopes.map(([key,label,num,letter])=>`
       <button class="scope-item" data-scope="${key}" data-mode="${mode}">
-        <span class="ic" style="background:${key==="all"?"#23262B":key==="single"?TYPE_META["单选"].color:key==="multi"?TYPE_META["多选"].color:TYPE_META["判断"].color}">${letter}</span>
+        <span class="ic" style="background:${key==="全部"?"#23262B":key==="单选"?TYPE_META["单选"].color:key==="多选"?TYPE_META["多选"].color:TYPE_META["判断"].color}">${letter}</span>
         <div class="t"><b>${label}</b><span>${num} 题</span></div>
         <span class="arrow"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></span>
       </button>`).join("")}
@@ -582,7 +582,7 @@ function startQuiz(mode, scope){
   if(mode==="exam"){
     ids=examComposition();
   } else {
-    const pool = scope==="all" ? QUESTIONS : byType(scope);
+    const pool = scope==="全部" ? QUESTIONS : byType(scope);
     ids = pool.map(q=>q.id);
     if(mode==="random"){ for(let i=ids.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[ids[i],ids[j]]=[ids[j],ids[i]];} }
   }
@@ -648,7 +648,7 @@ function viewQuiz(){
       ${feedback}
       ${graded?`<div class="action-row">
         <button class="btn primary" id="nextBtn">${qz.idx>=total-1?(qz.mode==="exam"?"交卷":"完成练习"):"下一题"}</button>
-      </div>`:(multi?`<div class="action-row"><button class="btn primary" id="submitBtn" ${answered.length?"":"disabled"}>提交答案</button></div>`:"")}
+      </div>`:`<div class="action-row"><button class="btn primary" id="submitBtn" ${answered.length?"":"disabled"}>提交答案</button></div>`}
     </div>
   </div>
   ${navHtml("home")}`;
@@ -665,8 +665,15 @@ function bindQuiz(){
   }
   if(q.type==="判断"){
     document.querySelectorAll(".judge-btn").forEach(b=>{
-      b.addEventListener("click", ()=>grade(q, b.dataset.k));
+      b.addEventListener("click", ()=>{
+        const k=b.dataset.k;
+        qz.answered[q.id]=[k];
+        document.querySelectorAll(".judge-btn").forEach(x=>x.classList.toggle("ok", x===b));
+        const sb=$("#submitBtn"); if(sb) sb.disabled=false;
+      });
     });
+    const sb=$("#submitBtn");
+    if(sb) sb.addEventListener("click", ()=>grade(q, qz.answered[q.id][0]));
   } else if(q.type==="多选"){
     document.querySelectorAll(".opt").forEach(o=>{
       o.addEventListener("click", ()=>{
@@ -682,8 +689,15 @@ function bindQuiz(){
     if(sb) sb.addEventListener("click", ()=>grade(q, qz.answered[q.id]||[]));
   } else {
     document.querySelectorAll(".opt").forEach(o=>{
-      o.addEventListener("click", ()=>grade(q, o.dataset.k));
+      o.addEventListener("click", ()=>{
+        const k=o.dataset.k;
+        qz.answered[q.id]=[k];
+        document.querySelectorAll(".opt").forEach(x=>x.classList.toggle("sel", x===o));
+        const sb=$("#submitBtn"); if(sb) sb.disabled=false;
+      });
     });
+    const sb=$("#submitBtn");
+    if(sb) sb.addEventListener("click", ()=>grade(q, qz.answered[q.id][0]));
   }
   // 考试计时
   if(qz.mode==="exam" && !qz._timerRunning){
