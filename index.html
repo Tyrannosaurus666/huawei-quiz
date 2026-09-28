@@ -50,6 +50,7 @@ a{color:inherit;text-decoration:none}
 .tb-title svg{width:19px;height:19px;color:var(--brand);flex:none}
 .icon-btn{width:38px;height:38px;border-radius:11px;display:inline-flex;align-items:center;justify-content:center;color:var(--ink);background:var(--card);border:1px solid var(--line);flex:none}
 .icon-btn:active{background:var(--line)}
+.icon-btn.fav-on{color:#E9A23B;border-color:#E9A23B;background:#FFF7DE}
 
 /* ===== 底部导航 ===== */
 .nav{position:fixed;bottom:0;left:0;right:0;z-index:30;background:rgba(255,255,255,.96);backdrop-filter:blur(10px);
@@ -95,6 +96,7 @@ a{color:inherit;text-decoration:none}
 .ic-order{background:var(--brand-soft);color:var(--brand)}
 .ic-random{background:#E9F0FB;color:var(--multi)}
 .ic-exam{background:#E8F5F2;color:var(--judge)}
+.ic-fav{background:#FFF7DE;color:#E9A23B}
 .sub-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
 .sub-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px 15px;display:flex;
   align-items:center;gap:12px;box-shadow:var(--shadow);transition:transform .16s ease,box-shadow .16s ease,border-color .16s ease}
@@ -333,6 +335,20 @@ const stat = {
   acc(){ const a=this.okTotal(), b=this.wrongTotal(); return a+b? Math.round(a/(a+b)*100):0; },
   wrongList(){ return Object.entries(store.prog).filter(([,p])=>p.last==="wrong").map(([id])=>+id); }
 };
+/* ===== 收藏 ===== */
+const FAV_KEY="hwqb_v1_favs";
+let favs = JSON.parse(localStorage.getItem(FAV_KEY)||"[]");
+function saveFavs(){ localStorage.setItem(FAV_KEY, JSON.stringify(favs)); }
+function isFav(id){ return favs.includes(id); }
+function toggleFav(id){
+  const i=favs.indexOf(id);
+  if(i>=0) favs.splice(i,1); else favs.push(id);
+  saveFavs(); render();
+}
+function clearFavs(){
+  if(!confirm("确定清空收藏？此操作不可恢复。")) return;
+  favs=[]; saveFavs(); render();
+}
 
 /* ===== 会话状态 ===== */
 const S = { quiz:null };
@@ -364,6 +380,9 @@ function render(){
   } else if(r.name==="wrong"){
     app.innerHTML = viewWrong();
     bindWrong();
+  } else if(r.name==="fav"){
+    app.innerHTML = viewFav();
+    bindWrong();
   } else if(r.name==="stats"){
     app.innerHTML = viewStats();
     animateViewNums();
@@ -384,6 +403,7 @@ const IC = {
   wrong:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-3.3 3.6-5.5 8-5.5s8 2.2 8 5.5"/><path d="M18.5 3.5l3 3M21.5 3.5l-3 3"/></svg>',
   stats:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>',
   home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 9.5V21h14V9.5"/></svg>',
+  star:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5l2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1L5.2 9.9l6.1-.9z"/></svg>',
   sheet:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg>',
   back:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>',
   close:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
@@ -455,6 +475,7 @@ function navHtml(active){
   const wrongCount = stat.wrongList().length;
   const items = [
     ["home","练习",IC.home],
+    ["fav","收藏",IC.star],
     ["wrong","错题",IC.wrong],
     ["stats","统计",IC.stats]
   ];
@@ -505,7 +526,7 @@ function viewHome(){
       </button>
       <button class="mode-card" onclick="go('#pick/exam')">
         <span class="ic ic-exam">${IC.exam}</span>
-        <h3>模拟考试</h3><p>40 题限时自测</p>
+        <h3>模拟考试</h3><p>80 题 · 限时 20 分钟</p>
       </button>
     </div>
 
@@ -515,6 +536,11 @@ function viewHome(){
         <span class="ic ic-order">${IC.wrong}</span>
         <div class="t"><b>错题本</b><span>巩固易错知识点</span></div>
         <span class="num">${wrong}</span>
+      </button>
+      <button class="sub-card" onclick="go('#fav')">
+        <span class="ic ic-fav">${IC.star}</span>
+        <div class="t"><b>收藏题</b><span>重点题考前巩固</span></div>
+        <span class="num" style="color:#E9A23B">${favs.length}</span>
       </button>
       <button class="sub-card" onclick="go('#stats')">
         <span class="ic ic-random">${IC.stats}</span>
@@ -610,7 +636,7 @@ function startQuiz(mode, scope){
     ids=examComposition();
     markExamSeen(ids);
   } else {
-    const pool = scope==="全部" ? QUESTIONS : byType(scope);
+    const pool = scope==="全部" ? QUESTIONS : scope==="fav" ? QUESTIONS.filter(q=>favs.includes(q.id)) : byType(scope);
     ids = pool.map(q=>q.id);
     if(mode==="random"){ for(let i=ids.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[ids[i],ids[j]]=[ids[j],ids[i]];} }
   }
@@ -662,6 +688,7 @@ function viewQuiz(){
   <div class="topbar">
     <button class="icon-btn" onclick="quitQuiz()">${IC.back}</button>
     <div class="tb-title">${IC.dino}${qz.mode==="exam"?"模拟考试":qz.mode==="random"?"随机练习":"顺序练习"} · 第 ${qz.idx+1}/${total} 题</div>
+    <button class="icon-btn ${isFav(q.id)?"fav-on":""}" onclick="toggleFav(${q.id})" title="收藏本题">${IC.star}</button>
     <button class="icon-btn" onclick="openSheet()" title="答题卡">${IC.sheet}<span style="font-size:11px;margin-left:1px">${done}</span></button>
   </div>
   <div class="quiz-progress"><i style="width:${Math.round(done/total*100)}%"></i></div>
@@ -908,6 +935,43 @@ function bindWrong(){
 function redoWrong(){
   const ids=stat.wrongList(); if(!ids.length){toast("暂无错题");return;}
   S.quiz={mode:"random",scope:"wrong",ids,idx:0,answered:{},results:{},startTs:Date.now(),timer:0};
+  go("#quiz");
+}
+
+/* ===== 视图：收藏 ===== */
+function viewFav(){
+  const favIds=favs.slice().reverse();
+  if(!favIds.length){
+    return `<div class="topbar"><div class="tb-title">${IC.dino}收藏题</div><div style="width:38px"></div></div>
+    <div class="view"><div class="empty"><div class="eic" style="background:#FFF7DE;color:#E9A23B">${IC.star}</div><b>暂无收藏</b><p>刷题时点右上角星标，重点题收进这里</p></div></div>
+    ${navHtml("fav")}`;
+  }
+  const items=favIds.map((id,i)=>{
+    const q=qById(id); const meta=TYPE_META[q.type];
+    const ansText=q.type==="判断"?(q.answer==="对"?"正确":"错误"):q.answer;
+    return `<div class="wrong-item" data-id="${id}">
+      <div class="w-head"><span class="badge ${meta.cls}">${q.type}</span><span class="qid">#${i+1}</span></div>
+      <div class="w-stem">${esc(displayQText(q))}</div>
+      <div class="w-ans">正确答案：${ansText}</div>
+      <div class="w-opts">${q.options.map(o=>`<div class="o ${q.answer.includes(o.k)?"right":""}">${o.k}. ${esc(o.t)}</div>`).join("")}</div>
+    </div>`;
+  }).join("");
+  return `
+  <div class="topbar"><div class="tb-title">${IC.dino}收藏题</div>
+    <button class="btn ghost" style="width:auto;padding:8px 12px;font-size:13px" onclick="clearFavs()">${IC.trash} 清空</button></div>
+  <div class="view">
+    <div class="card" style="padding:14px 16px;display:flex;align-items:center;gap:12px">
+      <span class="ic ic-fav" style="width:40px;height:40px;border-radius:12px;display:inline-flex;align-items:center;justify-content:center">${IC.star}</span>
+      <div class="t" style="flex:1"><b style="font-size:15px">共 ${favIds.length} 道收藏题</b><div style="font-size:12px;color:#6F7683">点击题目可展开选项与答案</div></div>
+      <button class="btn primary" style="width:auto;padding:9px 14px;font-size:13px" onclick="redoFav()">全部重练</button>
+    </div>
+    <div style="margin-top:14px">${items}</div>
+  </div>
+  ${navHtml("fav")}`;
+}
+function redoFav(){
+  const ids=favs.slice(); if(!ids.length){toast("暂无收藏题");return;}
+  S.quiz={mode:"random",scope:"fav",ids,idx:0,answered:{},results:{},startTs:Date.now(),timer:0};
   go("#quiz");
 }
 function clearWrong(){
