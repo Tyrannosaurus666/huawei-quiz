@@ -576,15 +576,39 @@ function bindPick(mode){
 
 /* ===== 模拟考试配置 ===== */
 const EXAM_LIMIT = 1200; // 限时 20 分钟（秒）
+const EXAMSEEN_KEY = "hwqb_v1_examseen";
+let examSeen = JSON.parse(localStorage.getItem(EXAMSEEN_KEY)||"{}"); // {题id: 在考试中出现过的次数}
 function examComposition(){
-  const pickN=(arr,n)=>{ const c=[...arr]; for(let i=c.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[c[i],c[j]]=[c[j],c[i]];} return c.slice(0,n); };
+  // 跨场次去重：按"在考试中出现次数"分组（0次->1次->…），出现少的优先抽，不够再往高次数组补
+  const pickN=(arr,n)=>{
+    const groups=new Map();
+    arr.forEach(id=>{
+      const c=examSeen[id]||0;
+      if(!groups.has(c)) groups.set(c,[]);
+      groups.get(c).push(id);
+    });
+    const res=[];
+    const levels=[...groups.keys()].sort((a,b)=>a-b);
+    for(const lv of levels){
+      if(res.length>=n) break;
+      const pool=[...groups.get(lv)];
+      for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}
+      res.push(...pool.slice(0,n-res.length));
+    }
+    return res;
+  };
   const ids=[...pickN(byType("单选").map(q=>q.id),30),...pickN(byType("多选").map(q=>q.id),20),...pickN(byType("判断").map(q=>q.id),30)];
   return ids;
+}
+function markExamSeen(ids){
+  ids.forEach(id=>{ examSeen[id]=(examSeen[id]||0)+1; });
+  localStorage.setItem(EXAMSEEN_KEY, JSON.stringify(examSeen));
 }
 function startQuiz(mode, scope){
   let ids;
   if(mode==="exam"){
     ids=examComposition();
+    markExamSeen(ids);
   } else {
     const pool = scope==="全部" ? QUESTIONS : byType(scope);
     ids = pool.map(q=>q.id);
