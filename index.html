@@ -168,6 +168,7 @@ a{color:inherit;text-decoration:none}
 .judge-btn:active{transform:scale(.97)}
 .judge-btn.ok{border-color:var(--ok);background:var(--ok-soft);color:var(--ok)}
 .judge-btn.bad{border-color:var(--err);background:var(--err-soft);color:var(--err)}
+.judge-btn.sel{border-color:var(--brand);background:#FFF1F2;color:var(--brand)}
 .judge-btn.dim{opacity:.5}
 
 /* 结果反馈 */
@@ -526,7 +527,7 @@ function viewHome(){
       </button>
       <button class="mode-card" onclick="go('#pick/exam')">
         <span class="ic ic-exam">${IC.exam}</span>
-        <h3>模拟考试</h3><p>80 题 · 限时 20 分钟</p>
+        <h3>模拟考试</h3><p>80 题 · 满分 100</p>
       </button>
     </div>
 
@@ -554,7 +555,7 @@ function viewHome(){
 /* ===== 视图：选择范围 ===== */
 function viewPick(mode){
   if(mode==="exam"){
-    const examNote="模拟考试规则：\u2022 共 80 题：单选 30 / 判断 30 / 多选 20，随机组卷，题目不重复\n\u2022 每题 1 分，满分 80 分\n\u2022 限时 20 分钟，超时自动交卷\n\u2022 可随时打开答题卡交卷\n\u2022 交卷后立即出成绩，未答题计为错误";
+    const examNote="模拟考试规则：\u2022 共 80 题：单选 30 / 判断 30 / 多选 20，随机组卷，题目不重复\n\u2022 计分：单选 1 分 / 多选 2 分 / 判断 1 分，满分 100 分\n\u2022 限时 20 分钟，超时自动交卷\n\u2022 选完自动跳下一题，可回看修改\n\u2022 考试中不显示对错，交卷后统一出成绩，未答题不得分";
     return `
     <div class="topbar"><button class="icon-btn" onclick="history.back()">${IC.back}</button>
       <div class="tb-title">${IC.dino}模拟考试</div><div style="width:38px"></div></div>
@@ -562,7 +563,7 @@ function viewPick(mode){
       <div class="card" style="margin-top:18px">
         <div style="display:flex;align-items:center;gap:12px">
           <span class="ic ic-exam" style="width:48px;height:48px;border-radius:14px;display:inline-flex;align-items:center;justify-content:center">${IC.exam}</span>
-          <div><b style="font-size:17px">模拟考试</b><div style="font-size:12.5px;color:#6F7683">80 题 · 满分 80 · 限时 20 分钟</div></div>
+          <div><b style="font-size:17px">模拟考试</b><div style="font-size:12.5px;color:#6F7683">80 题 · 满分 100 · 限时 20 分钟</div></div>
         </div>
         <div style="background:#F3F4F6;border-radius:12px;padding:13px 14px;margin-top:14px;font-size:13px;color:#6F7683;white-space:pre-line;line-height:1.8">${esc(examNote)}</div>
       </div>
@@ -659,7 +660,7 @@ function viewQuiz(){
       ${["对","错"].map(k=>{
         const isSel=selJ===k, cls=[];
         if(graded){ if(k===q.answer) cls.push("ok"); else if(isSel) cls.push("bad"); else cls.push("dim"); }
-        else if(isSel) cls.push("ok");
+        else if(isSel) cls.push(qz.mode==="exam"?"sel":"ok");
         return `<button class="judge-btn ${cls.join(" ")}" data-k="${k}" ${graded?"disabled":""}>${k==="对"?"正确":"错误"}</button>`;
       }).join("")}
     </div>`;
@@ -701,11 +702,15 @@ function viewQuiz(){
       <div class="qstem"><span class="q-no">${qz.idx+1}.</span> ${esc(displayQText(q))}</div>
       ${optsHtml}
       ${feedback}
-      ${graded?`<div class="action-row">
-        <button class="btn primary" id="nextBtn">${qz.idx>=total-1?(qz.mode==="exam"?"交卷":"完成练习"):"下一题"}</button>
-        ${qz.mode==="exam"&&qz.idx<total-1?`<button class="btn ghost err" onclick="examSubmit()">提前交卷</button>`:""}
-      </div>`:`<div class="action-row"><button class="btn primary" id="submitBtn" ${answered.length?"":"disabled"}>提交答案</button>
-        ${qz.mode==="exam"?`<button class="btn ghost err" onclick="examSubmit()">交卷</button>`:""}</div>`}
+      ${qz.mode==="exam"?`<div class="action-row">
+        ${qz.idx>0?`<button class="btn ghost" id="prevBtn">上一题</button>`:""}
+        ${qz.idx>=total-1
+          ?`<button class="btn primary" id="submitExamBtn" onclick="examSubmit()">交卷</button>`
+          :`<button class="btn primary" id="nextBtn" ${q.type==="多选"&&!answered.length?"disabled":""}>下一题</button>`}
+      </div>`
+      :graded?`<div class="action-row">
+        <button class="btn primary" id="nextBtn">${qz.idx>=total-1?"完成练习":"下一题"}</button>
+      </div>`:`<div class="action-row"><button class="btn primary" id="submitBtn" ${answered.length?"":"disabled"}>提交答案</button></div>`}
     </div>
   </div>
   ${navHtml("home")}`;
@@ -717,20 +722,31 @@ function bindQuiz(){
   const graded=qz.results[q.id]!==undefined;
   if(graded){
     const nb=$("#nextBtn");
-    nb.addEventListener("click", nextQuestion);
+    if(nb) nb.addEventListener("click", nextQuestion);
     return;
   }
+  const isExam=qz.mode==="exam";
+  const autoNext=()=>{
+    if(qz.idx<qz.ids.length-1){ qz.idx++; render(); }
+    else render(); // 最后一题：停留并高亮已选
+    window.scrollTo(0,0);
+  };
   if(q.type==="判断"){
     document.querySelectorAll(".judge-btn").forEach(b=>{
       b.addEventListener("click", ()=>{
         const k=b.dataset.k;
         qz.answered[q.id]=[k];
-        document.querySelectorAll(".judge-btn").forEach(x=>x.classList.toggle("ok", x===b));
-        const sb=$("#submitBtn"); if(sb) sb.disabled=false;
+        if(isExam){ autoNext(); }
+        else {
+          document.querySelectorAll(".judge-btn").forEach(x=>x.classList.toggle("ok", x===b));
+          const sb=$("#submitBtn"); if(sb) sb.disabled=false;
+        }
       });
     });
-    const sb=$("#submitBtn");
-    if(sb) sb.addEventListener("click", ()=>grade(q, qz.answered[q.id][0]));
+    if(!isExam){
+      const sb=$("#submitBtn");
+      if(sb) sb.addEventListener("click", ()=>grade(q, qz.answered[q.id][0]));
+    }
   } else if(q.type==="多选"){
     document.querySelectorAll(".opt").forEach(o=>{
       o.addEventListener("click", ()=>{
@@ -739,22 +755,37 @@ function bindQuiz(){
         if(i>=0) cur.splice(i,1); else cur.push(k);
         qz.answered[q.id]=cur;
         o.classList.toggle("sel", i<0);
-        const sb=$("#submitBtn"); if(sb) sb.disabled=cur.length===0;
+        if(isExam){
+          const nb=$("#nextBtn"); if(nb) nb.disabled=cur.length===0;
+        } else {
+          const sb=$("#submitBtn"); if(sb) sb.disabled=cur.length===0;
+        }
       });
     });
-    const sb=$("#submitBtn");
-    if(sb) sb.addEventListener("click", ()=>grade(q, qz.answered[q.id]||[]));
+    if(!isExam){
+      const sb=$("#submitBtn");
+      if(sb) sb.addEventListener("click", ()=>grade(q, qz.answered[q.id]||[]));
+    }
   } else {
     document.querySelectorAll(".opt").forEach(o=>{
       o.addEventListener("click", ()=>{
         const k=o.dataset.k;
         qz.answered[q.id]=[k];
-        document.querySelectorAll(".opt").forEach(x=>x.classList.toggle("sel", x===o));
-        const sb=$("#submitBtn"); if(sb) sb.disabled=false;
+        if(isExam){ autoNext(); }
+        else {
+          document.querySelectorAll(".opt").forEach(x=>x.classList.toggle("sel", x===o));
+          const sb=$("#submitBtn"); if(sb) sb.disabled=false;
+        }
       });
     });
-    const sb=$("#submitBtn");
-    if(sb) sb.addEventListener("click", ()=>grade(q, qz.answered[q.id][0]));
+    if(!isExam){
+      const sb=$("#submitBtn");
+      if(sb) sb.addEventListener("click", ()=>grade(q, qz.answered[q.id][0]));
+    }
+  }
+  if(isExam){
+    const nb=$("#nextBtn"); if(nb) nb.addEventListener("click", nextQuestion);
+    const pb=$("#prevBtn"); if(pb) pb.addEventListener("click", ()=>{ if(qz.idx>0){ qz.idx--; render(); } });
   }
   // 考试计时（限时倒计时，超时自动交卷）
   if(qz.mode==="exam" && !qz._timerRunning){
@@ -803,8 +834,10 @@ function openSheet(){
   const qz=S.quiz; if(!qz) return;
   const mask=document.createElement("div");
   mask.className="sheet-mask"; mask.id="sheetMask";
+  const isExam=qz.mode==="exam";
   const cells=qz.ids.map((id,i)=>{
-    const res=qz.results[id], cls=res===undefined?"":res?"ok":"bad";
+    const res=qz.results[id];
+    const cls = isExam ? (qz.answered[id]!==undefined?"ok":"") : (res===undefined?"":res?"ok":"bad");
     return `<button class="${cls} ${i===qz.idx?"cur":""}" data-i="${i}">${i+1}</button>`;
   }).join("");
   mask.innerHTML=`<div class="sheet">
@@ -813,10 +846,9 @@ function openSheet(){
       <button class="icon-btn" onclick="closeSheet()">${IC.close}</button></div>
     <div class="sheet-grid">${cells}</div>
     <div class="sheet-legend">
-      <span><i style="background:#F3F4F6"></i>未答</span>
-      <span><i style="background:#E7F6ED"></i>答对</span>
-      <span><i style="background:#FBE9EA"></i>答错</span>
-      <span><i style="background:#fff;border:1px solid #C7000B"></i>当前</span>
+      ${isExam
+        ?`<span><i style="background:#F3F4F6"></i>未答</span><span><i style="background:#E7F6ED"></i>已答</span><span><i style="background:#fff;border:1px solid #C7000B"></i>当前</span>`
+        :`<span><i style="background:#F3F4F6"></i>未答</span><span><i style="background:#E7F6ED"></i>答对</span><span><i style="background:#FBE9EA"></i>答错</span><span><i style="background:#fff;border:1px solid #C7000B"></i>当前</span>`}
     </div>
     <div class="sheet-actions">
       ${qz.mode==="exam"?`<button class="btn primary" onclick="examSubmit()">交卷</button>`:`<button class="btn ghost" onclick="closeSheet()">继续答题</button>`}
@@ -833,23 +865,37 @@ function closeSheet(){
 }
 function examSubmit(){
   const qz=S.quiz;
+  if(!qz) return;
   if(qz._timer) clearInterval(qz._timer);
+  // 交卷时统一判分：遍历已答的题，未答不计分
+  qz.ids.forEach(id=>{
+    const ch=qz.answered[id];
+    if(ch===undefined) return;
+    const q=qById(id);
+    const ok = q.type==="判断" ? (ch[0]===q.answer) : (ch.slice().sort().join("")===q.answer.split("").sort().join(""));
+    qz.results[id]=ok;
+    store.record(id, ok);
+  });
   finishQuiz();
 }
 
 /* ===== 视图：结果 ===== */
 function viewResult(){
   const qz=S.quiz; if(!qz){ return `<div class="view"><div class="empty"><b>没有数据</b><p>先完成一次练习吧</p></div></div>`; }
-  let ok=0,bad=0,nil=0;
+  const isExam=qz.mode==="exam";
+  let ok=0,bad=0,nil=0, score=0, full=0;
   qz.ids.forEach(id=>{
     const r=qz.results[id];
-    if(r===true) ok++; else if(r===false) bad++; else nil++;
+    const s = isExam && qById(id).type==="多选" ? 2 : 1; // 考试计分：多选 2 分，单选/判断 1 分
+    full += s;
+    if(r===true){ ok++; score+=s; }
+    else if(r===false) bad++;
+    else nil++;
   });
-  const total=qz.ids.length, acc=Math.round(ok/total*100);
+  const total=qz.ids.length, acc=Math.round(score/full*100);
   const modeLabel=qz.mode==="exam"?"模拟考试":qz.mode==="random"?"随机练习":"顺序练习";
-  const isExam=qz.mode==="exam";
   const timeStr=isExam?`${String(Math.floor(qz.timer/60)).padStart(2,"0")}:${String(qz.timer%60).padStart(2,"0")}`:"";
-  const donut=donutSvg([{value:ok,color:"#1E9E53"},{value:bad,color:"#D5343E"},{value:nil,color:"#D3D7DE"}],150,18,isExam?`${ok}/${total}`:`${acc}%`,isExam?"得分":"正确率");
+  const donut=donutSvg([{value:score,color:"#1E9E53"},{value:bad,color:"#D5343E"},{value:nil,color:"#D3D7DE"}],150,18,isExam?`${score}/${full}`:`${acc}%`,isExam?"得分":"正确率");
   return `
   <div class="topbar"><button class="icon-btn" onclick="quitQuiz()">${IC.back}</button>
     <div class="tb-title">${IC.dino}${modeLabel} · 成绩</div><div style="width:38px"></div></div>
@@ -858,12 +904,12 @@ function viewResult(){
       <div class="result-hero">
         <div class="donut">${donut}</div>
         <div class="info">
-          <b>${isExam?`${ok}/${total} 分`:`${acc}%`}</b>
-          <div class="lbl">${isExam?"每题 1 分 · 答对 "+ok+" 题":"答对 "+ok+" 题"}${timeStr?` · 用时 ${timeStr}`:""}</div>
+          <b>${isExam?`${score}/${full} 分`:`${acc}%`}</b>
+          <div class="lbl">${isExam?"单选/判断 1 分 · 多选 2 分 · 答对 "+ok+" 题":"答对 "+ok+" 题"}${timeStr?` · 用时 ${timeStr}`:""}</div>
         </div>
       </div>
       <div class="result-stats">
-        ${isExam?`<div class="rs ok"><b>${ok}/${total}</b><span>成绩</span></div>
+        ${isExam?`<div class="rs ok"><b>${score}/${full}</b><span>成绩</span></div>
         <div class="rs bad"><b>${bad}</b><span>错题</span></div>
         <div class="rs ok"><b>${acc}%</b><span>正确率</span></div>`
         :`<div class="rs ok"><b>${ok}</b><span>答对</span></div>
